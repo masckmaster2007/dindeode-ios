@@ -211,16 +211,11 @@
 	[Utils increaseLaunchCount];
 
 	_icons = @[
-		@{ @"name" : @"Default", @"Logo" : @"geode_logo", @"iconName" : @"AppIcon" },
-		@{ @"name" : @"Geode", @"Logo" : @"new_geode_logo", @"iconName" : @"Geode" },
-		@{ @"name" : @"Pride", @"Logo" : @"pride_logo", @"iconName" : @"Pride" },
-		@{ @"name" : @"Lesbian", @"Logo" : @"lesbian_logo", @"iconName" : @"Lesbian" },
-		@{ @"name" : @"Gay", @"Logo" : @"gay_logo", @"iconName" : @"Gay" },
-		@{ @"name" : @"Bi", @"Logo" : @"bi_logo", @"iconName" : @"Bi" },
-		@{ @"name" : @"Trans", @"Logo" : @"trans_logo", @"iconName" : @"Trans" },
-		@{ @"name" : @"Pan", @"Logo" : @"pan_logo", @"iconName" : @"Pan" },
-		@{ @"name" : @"Nonbinary", @"Logo" : @"nonbinary_logo", @"iconName" : @"Nonbinary" },
-		@{ @"name" : @"Asexual", @"Logo" : @"asexual_logo", @"iconName" : @"Asexual" },
+		@{ @"name" : @"Default", @"Logo" : @"geode_logo", @"iconName" : @"AppIcon" }, @{ @"name" : @"Geode", @"Logo" : @"new_geode_logo", @"iconName" : @"Geode" },
+		@{ @"name" : @"Pride", @"Logo" : @"pride_logo", @"iconName" : @"Pride" }, @{ @"name" : @"Lesbian", @"Logo" : @"lesbian_logo", @"iconName" : @"Lesbian" },
+		@{ @"name" : @"Gay", @"Logo" : @"gay_logo", @"iconName" : @"Gay" }, @{ @"name" : @"Bi", @"Logo" : @"bi_logo", @"iconName" : @"Bi" },
+		@{ @"name" : @"Trans", @"Logo" : @"trans_logo", @"iconName" : @"Trans" }, @{ @"name" : @"Pan", @"Logo" : @"pan_logo", @"iconName" : @"Pan" },
+		@{ @"name" : @"Nonbinary", @"Logo" : @"nonbinary_logo", @"iconName" : @"Nonbinary" }, @{ @"name" : @"Asexual", @"Logo" : @"asexual_logo", @"iconName" : @"Asexual" },
 		@{ @"name" : @"Genderfluid", @"Logo" : @"genderfluid_logo", @"iconName" : @"Genderfluid" },
 		@{ @"name" : @"Perfection.", @"Logo" : @"pride_logo", @"iconName" : @"Perfection" }
 	];
@@ -241,8 +236,8 @@
 		}
 	} else {
 		if (iconKey == nil) {
-			NSString *foundName = nil;
-			for (NSDictionary *dict in _icons) {
+			NSString* foundName = nil;
+			for (NSDictionary* dict in _icons) {
 				if ([dict[@"iconName"] isEqualToString:currentIcon]) {
 					foundName = dict[@"name"];
 					break;
@@ -254,9 +249,9 @@
 			}
 		}
 	}
-	NSString *logoFile = nil;
+	NSString* logoFile = nil;
 	if (iconKey) {
-		for (NSDictionary *dict in _icons) {
+		for (NSDictionary* dict in _icons) {
 			if ([dict[@"name"] isEqualToString:iconKey]) {
 				logoFile = dict[@"Logo"];
 				break;
@@ -268,7 +263,7 @@
 	} else {
 		self.logoImageView = [Utils imageViewFromPDF:@"geode_logo"];
 	}
-	//self.logoImageView = [Utils imageViewFromPDF:@"geode_logo"];
+	// self.logoImageView = [Utils imageViewFromPDF:@"geode_logo"];
 	if (self.logoImageView) {
 		self.logoImageView.layer.cornerRadius = 50;
 		self.logoImageView.clipsToBounds = YES;
@@ -523,7 +518,7 @@
 		[[[GeodeInstaller alloc] init] startInstall:self ignoreRoot:NO];
 	} else {
 		if (![VerifyInstall verifyGDAuthenticity])
-			return AppLog(@"GD not verified! Not installing!");
+			return AppLog(@"GD not verified! Not installing!"); // imagine 😂
 		if (LOCAL_BUILD == 1) {
 			AppLog(@"Downloading locally");
 			NSURLSession* session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:self delegateQueue:nil];
@@ -531,57 +526,16 @@
 			[downloadTask resume];
 			return;
 		}
-		// this is all so unnecessary, just use import IPA if you're that desperate
-		NSData* b64Data = [[NSData alloc] initWithBase64EncodedString:@"__KEY_PART2__" options:0];
-		if (!b64Data) {
-			[Utils showError:self title:@"launcher.error.non".loc error:nil];
-			[self updateState];
-			return;
-		}
-		NSString* b64 = [[NSString alloc] initWithData:b64Data encoding:NSUTF8StringEncoding];
-		[self.progressBar setHidden:NO];
-		NSURLRequest* request2 = [NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@", b64]]];
-		NSURLSession* session2 = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
-		NSURLSessionDataTask* dataTask = [session2 dataTaskWithRequest:request2 completionHandler:^(NSData* data, NSURLResponse* response, NSError* error) {
-			if (error) {
-				return dispatch_async(dispatch_get_main_queue(), ^{
-					[Utils showError:self title:@"launcher.error.req-failed".loc error:error];
-					[self updateState];
-					AppLog(@"Error during request: %@", error);
-				});
-			}
-			if (data) {
-				NSString* keyData = [[NSString stringWithFormat:@"%@__KEY_PART1__", [[NSString alloc] initWithData:data
-																										  encoding:NSUTF8StringEncoding]] stringByReplacingOccurrencesOfString:@"\n"
-																																									withString:@""];
-				NSString* eStr = @"__DOWNLOAD_LINK__";
-				NSData* dataToDecrypt = [[NSData alloc] initWithBase64EncodedString:eStr options:0];
-				NSString* decoded = [[NSString alloc] initWithData:[Utils decryptData:dataToDecrypt withKey:keyData] encoding:NSUTF8StringEncoding];
-
-				NSData* decodedb64Data = [[NSData alloc] initWithBase64EncodedString:decoded options:0];
-				if (!decodedb64Data) {
-					dispatch_async(dispatch_get_main_queue(), ^{
-						[Utils showError:self title:@"launcher.error.req-failed".loc error:nil];
-						[self updateState];
-						AppLog(@"Error during decoding, data is invalid.");
-					});
-					return;
-				}
-				NSString* decb64 = [[NSString alloc] initWithData:decodedb64Data encoding:NSUTF8StringEncoding];
-				dispatch_async(dispatch_get_main_queue(), ^{
-					NSURLSession* session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:self delegateQueue:nil];
-					downloadTask = [session downloadTaskWithURL:[NSURL URLWithString:decb64]];
-					[downloadTask resume];
-				});
-			} else {
-				dispatch_async(dispatch_get_main_queue(), ^{
-					[Utils showError:self title:@"launcher.error.req-failed".loc error:nil];
-					[self updateState];
-					AppLog(@"Error during request, data is invalid.");
-				});
-			}
-		}];
-		[dataTask resume];
+		UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Install GD" message:@"Since i removed automatic download, import your GD ipa to install."
+																preferredStyle:UIAlertControllerStyleAlert];
+		[alert addAction:[UIAlertAction actionWithTitle:@"Import IPA" style:UIAlertActionStyleDefault handler:^(UIAlertAction* _Nonnull action) {
+				   UIDocumentPickerViewController* picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[ [UTType typeWithFilenameExtension:@"ipa"] ]
+																														asCopy:YES];
+				   picker.delegate = self;
+				   [self presentViewController:picker animated:YES completion:nil];
+			   }]];
+		[alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+		[self presentViewController:alert animated:YES completion:nil];
 	}
 }
 
@@ -637,7 +591,7 @@
 			  }];
 	} else if ([[Utils getPrefs] integerForKey:@"FORCE_CERT_JIT"]) {
 		// probably should move this... or idk
-		[Utils copyOrigBinary:^(BOOL success, NSString *error) {
+		[Utils copyOrigBinary:^(BOOL success, NSString* error) {
 			dispatch_async(dispatch_get_main_queue(), ^{
 				if (success) {
 					self.optionalTextLabel.text = @"launcher.status.signing".loc;
@@ -656,9 +610,7 @@
 								[LCUtils signTweaks:[LCPath tweakPath] force:NO progressHandler:^(NSProgress* progress) {} completion:^(NSError* error) {
 									if (error != nil) {
 										AppLog(@"Detailed error for signing tweaks: %@", error);
-										return completionHandler(
-											NO,
-											@"Couldn't sign tweaks. Please make sure that you imported a certificate in settings.");
+										return completionHandler(NO, @"Couldn't sign tweaks. Please make sure that you imported a certificate in settings.");
 									}
 									if (error != nil) {
 										AppLog(@"Detailed error for signing mods: %@", error);
@@ -667,10 +619,10 @@
 									completionHandler(YES, nil);
 								}];
 							} progressHandler:^(NSProgress* signProgress) {} forceSign:NO blockMainThread:YES];
-						  }];
-					  } else {
-						  return completionHandler(NO, @"No certificate found. Please go to settings to import a certificate.");
-					  }
+						}];
+					} else {
+						return completionHandler(NO, @"No certificate found. Please go to settings to import a certificate.");
+					}
 				} else {
 					completionHandler(NO, error);
 				}
@@ -741,10 +693,10 @@
 					  } else {
 						  completionHandler(NO, error);
 					  }
-			});
-		}];
+				  });
+			  }];
 	} else if ([[Utils getPrefs] integerForKey:@"FORCE_CERT_JIT"]) {
-		[Utils copyOrigBinary:^(BOOL success, NSString *error) {
+		[Utils copyOrigBinary:^(BOOL success, NSString* error) {
 			dispatch_async(dispatch_get_main_queue(), ^{
 				if (success) {
 					BOOL force = forceSign;
@@ -758,7 +710,7 @@
 								return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 							}
 							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
-								[app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
+							[app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
 								if (signError)
 									return completionHandler(NO, signError);
 								[LCUtils signTweaks:[LCPath tweakPath] force:force progressHandler:^(NSProgress* progress) {} completion:^(NSError* error) {
@@ -767,17 +719,19 @@
 										return completionHandler(NO, @"Couldn't sign tweaks. Please make sure that you imported a certificate in settings.");
 									}
 
-									[LCUtils signModsNew:[[LCPath dataPath] URLByAppendingPathComponent:@"game/geode"] force:force progressHandler:^(NSProgress* progress) {} completion:^(NSError* error) {
-										[LCUtils signMods:[[LCPath dataPath] URLByAppendingPathComponent:@"game/geode"] force:force progressHandler:^(NSProgress* progress) {} completion:^(NSError* error) {
-										if (error != nil) {
-											AppLog(@"Detailed error for signing mods: %@", error);
-											return completionHandler(NO, @"Couldn't sign mods. Please make sure that you imported a certificate in settings.");
-										}
-										[[Utils getPrefs] setValue:[Utils gdBundleName] forKey:@"selected"];
-										[[Utils getPrefs] setValue:@"GeometryDash" forKey:@"selectedContainer"];
-									completionHandler(YES, nil);
+									[LCUtils signModsNew:[[LCPath dataPath] URLByAppendingPathComponent:@"game/geode"] force:force progressHandler:^(NSProgress* progress) {}
+										completion:^(NSError* error) {
+											[LCUtils signMods:[[LCPath dataPath] URLByAppendingPathComponent:@"game/geode"] force:force progressHandler:^(NSProgress* progress) {}
+												completion:^(NSError* error) {
+													if (error != nil) {
+														AppLog(@"Detailed error for signing mods: %@", error);
+														return completionHandler(NO, @"Couldn't sign mods. Please make sure that you imported a certificate in settings.");
+													}
+													[[Utils getPrefs] setValue:[Utils gdBundleName] forKey:@"selected"];
+													[[Utils getPrefs] setValue:@"GeometryDash" forKey:@"selectedContainer"];
+													completionHandler(YES, nil);
+												}];
 										}];
-									}];
 								}];
 							} progressHandler:^(NSProgress* signProgress) {} forceSign:force blockMainThread:YES];
 						}];
@@ -818,7 +772,8 @@
 	NSString* openURL = [NSString stringWithFormat:@"geode-helper://launch?args=%@%@", encodedUrl, [[Utils getPrefs] boolForKey:@"USE_MAX_FPS"] ? @"&cahighfps=1" : @""];
 	if (patchCheck) {
 		NSString* checksum = [EnterpriseCompare getChecksum:NO];
-		openURL = [NSString stringWithFormat:@"geode-helper://launch?checksum=%@&args=%@%@", checksum, encodedUrl, [[Utils getPrefs] boolForKey:@"USE_MAX_FPS"] ? @"&cahighfps=1" : @""];
+		openURL =
+			[NSString stringWithFormat:@"geode-helper://launch?checksum=%@&args=%@%@", checksum, encodedUrl, [[Utils getPrefs] boolForKey:@"USE_MAX_FPS"] ? @"&cahighfps=1" : @""];
 	}
 	NSURL* url = [NSURL URLWithString:openURL];
 	if ([[UIApplication sharedApplication] canOpenURL:url]) {
@@ -1225,6 +1180,12 @@
 }
 
 - (void)documentPicker:(UIDocumentPickerViewController*)controller didPickDocumentsAtURLs:(nonnull NSArray<NSURL*>*)urls {
+	NSURL* url = urls.firstObject;
+	if ([url.pathExtension.lowercaseString isEqualToString:@"ipa"]) {
+		[VerifyInstall startGDInstall:self url:url];
+		return;
+	}
+
 	NSURL* folderURL = urls.firstObject;
 	// mini "hack" to get around this
 	if ([folderURL startAccessingSecurityScopedResource]) {
