@@ -34,7 +34,7 @@ include $(THEOS_MAKE_PATH)/aggregate.mk
 
 after-package::
 ifeq ($(TROLLSTORE),1)
-	@mv "$(THEOS_PACKAGE_DIR)/trollstore_$(THEOS_PACKAGE_BASE_VERSION).ipa" "$(THEOS_PACKAGE_DIR)/com.geode.launcher_$(THEOS_PACKAGE_BASE_VERSION).tipa"
+	@mv "$(THEOS_PACKAGE_DIR)/trollstore_$(THEOS_PACKAGE_BASE_VERSION).ipa" "$(THEOS_PACKAGE_DIR)/be.dimisaio.dindem_$(THEOS_PACKAGE_BASE_VERSION).tipa"
 endif
 
 before-all::

@@ -46,7 +46,7 @@ BOOL hasDoneUpdate = NO;
 															preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction* launchAction = [UIAlertAction actionWithTitle:@"common.ok".loc style:UIAlertActionStyleDefault handler:^(UIAlertAction* _Nonnull action) {
-		BOOL canLaunch = [VerifyInstall canLaunchAppWithBundleID:@"com.robtop.geometryjump"];
+		BOOL canLaunch = [VerifyInstall canLaunchAppWithBundleID:@"be.dimisaio.dindegdps22"];
 		if (!canLaunch) {
 			UIAlertController* resultAlert = [UIAlertController alertControllerWithTitle:@"Error" message:@"launcher.verify-gd.error".loc
 																		  preferredStyle:UIAlertControllerStyleAlert];

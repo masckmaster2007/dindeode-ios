@@ -526,7 +526,7 @@
 			[downloadTask resume];
 			return;
 		}
-		UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Install GD" message:@"Since i removed automatic download, import your GD ipa to install."
+		UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Import DindeGDPS' IPA!" message:@"Please import the DindeGDPS IPA!"
 																preferredStyle:UIAlertControllerStyleAlert];
 		[alert addAction:[UIAlertAction actionWithTitle:@"Import IPA" style:UIAlertActionStyleDefault handler:^(UIAlertAction* _Nonnull action) {
 				   UIDocumentPickerViewController* picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[ [UTType typeWithFilenameExtension:@"ipa"] ]
@@ -564,7 +564,7 @@
 								  if (status != 0) {
 									  return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 								  }
-								  LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+								  LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 								  [app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
 									  if (signError)
 										  return completionHandler(NO, signError);
@@ -603,7 +603,7 @@
 							if (status != 0) {
 								return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 							}
-							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 							[app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
 								if (signError)
 									return completionHandler(NO, signError);
@@ -661,7 +661,7 @@
 								  if (status != 0) {
 									  return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 								  }
-								  LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+								  LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 								  [app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
 									  if (signError)
 										  return completionHandler(NO, signError);
@@ -709,7 +709,7 @@
 							if (status != 0) {
 								return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 							}
-							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 							[app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
 								if (signError)
 									return completionHandler(NO, signError);

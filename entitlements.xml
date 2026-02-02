@@ -4,7 +4,7 @@
 <dict>
 	<!-- NOTICE, when signing, replace the AAAAA11111 with your team id if this is causing you problems with keychain -->
 	<key>application-identifier</key>
-	<string>AAAAA11111.com.geode.launcher</string>
+	<string>AAAAA11111.be.dimisaio.dindem</string>
 	<key>com.apple.developer.team-identifier</key>
 	<string>AAAAA11111</string>
 	<key>com.apple.developer.kernel.extended-virtual-addressing</key>
@@ -22,7 +22,7 @@
 	<true/>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>AAAAA11111.com.geode.launcher.shared</string>
+		<string>AAAAA11111.be.dimisaio.dindem.shared</string>
     </array>
     <!-- TODO: figure out another entitlement than this, because this just breaks JIT -->
     <!--<key>com.apple.security.exception.files.absolute-path.read-write</key>

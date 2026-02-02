@@ -58,7 +58,7 @@ extern NSBundle* gcMainBundle;
 			NSURL* path = [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:group];
 			if (!path)
 				continue;
-			NSURL* bundlePath = [path URLByAppendingPathComponent:@"Apps/com.geode.launcher/App.app"];
+			NSURL* bundlePath = [path URLByAppendingPathComponent:@"Apps/be.dimisaio.dindem/App.app"];
 			if ([NSFileManager.defaultManager fileExistsAtPath:bundlePath.path]) {
 				// This will fail if LiveContainer is installed in both stores, but it should never be the case
 				appGroupID = group;
@@ -185,7 +185,7 @@ extern NSBundle* gcMainBundle;
 		return;
 	}
 	if (![Utils isSandboxed]) {
-		NSString* appBundleIdentifier = @"com.robtop.geometryjump";
+		NSString* appBundleIdentifier = @"be.dimisaio.dindegdps22";
 		[[LSApplicationWorkspace defaultWorkspace] openApplicationWithBundleID:appBundleIdentifier];
 		exit(0);
 		return;
@@ -268,11 +268,11 @@ extern NSBundle* gcMainBundle;
 		tries = 2;
 		urlScheme = [NSString stringWithFormat:@"%@://livecontainer-launch?bundle-name=%@", [NSUserDefaults performSelector:@selector(lcAppUrlScheme)], [[NSBundle mainBundle] bundlePath].lastPathComponent];
 		if (![application canOpenURL:[NSURL URLWithString:urlScheme]]) {
-			urlScheme = [NSString stringWithFormat:@"%@://livecontainer-launch?bundle-name=com.geode.launcher.app", [NSUserDefaults performSelector:@selector(lcAppUrlScheme)]];
+			urlScheme = [NSString stringWithFormat:@"%@://livecontainer-launch?bundle-name=be.dimisaio.dindem.app", [NSUserDefaults performSelector:@selector(lcAppUrlScheme)]];
 			if (![application canOpenURL:[NSURL URLWithString:urlScheme]]) {
-				urlScheme = @"livecontainer://livecontainer-launch?bundle-name=com.geode.launcher.app";
+				urlScheme = @"livecontainer://livecontainer-launch?bundle-name=be.dimisaio.dindem.app";
 				if (![application canOpenURL:[NSURL URLWithString:urlScheme]]) {
-					urlScheme = @"livecontainer2://livecontainer-launch?bundle-name=com.geode.launcher.app";
+					urlScheme = @"livecontainer2://livecontainer-launch?bundle-name=be.dimisaio.dindem.app";
 				}
 			}
 		}

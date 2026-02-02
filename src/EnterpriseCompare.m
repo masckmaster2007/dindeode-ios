@@ -8,7 +8,7 @@
 	NSArray* modsDir = [fm contentsOfDirectoryAtPath:[[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"mods"] error:nil];
 	if (!helper) {
 		NSURL* docPath = [[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].lastObject;
-		NSURL* bundlePath = [[docPath URLByAppendingPathComponent:@"Applications"] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"];
+		NSURL* bundlePath = [[docPath URLByAppendingPathComponent:@"Applications"] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"];
 		modsDir = [fm contentsOfDirectoryAtPath:[bundlePath.path stringByAppendingPathComponent:@"mods"] error:nil];
 	}
 	for (NSString* file in modsDir) {

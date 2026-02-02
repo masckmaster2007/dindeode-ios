@@ -22,7 +22,7 @@ extern NSBundle* gcMainBundle;
 
 		NSString* infoPlistPath;
 		if (![Utils isSandboxed]) {
-			infoPlistPath = [[Utils getGDBundlePath] stringByAppendingPathComponent:@"GeometryJump.app/Info.plist"];
+			infoPlistPath = [[Utils getGDBundlePath] stringByAppendingPathComponent:@"DindeGDPS.app/Info.plist"];
 		} else {
 			if ([Utils isContainerized]) {
 				infoPlistPath = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"Info.plist"];

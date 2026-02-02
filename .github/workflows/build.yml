@@ -86,8 +86,8 @@ jobs:
 
     - name: Rename files
       run: |
-        mv artifacts/GeodeLauncher/com.geode.launcher_${{ steps.ref.outputs.version }}.ipa artifacts/GeodeLauncher/com.geode.launcher_${{ steps.ref.outputs.hash }}.ipa
-        mv artifacts/GeodeLauncher/com.geode.launcher_${{ steps.ref.outputs.version }}.tipa artifacts/GeodeLauncher/com.geode.launcher_${{ steps.ref.outputs.hash }}.tipa
+        mv artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.version }}.ipa artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.hash }}.ipa
+        mv artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.version }}.tipa artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.hash }}.tipa
 
     - name: Update Development Release
       uses: andelf/nightly-release@main

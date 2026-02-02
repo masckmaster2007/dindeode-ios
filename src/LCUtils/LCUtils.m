@@ -70,7 +70,7 @@ Class LCSharedUtilsClass = nil;
 	if ([[Utils getPrefs] boolForKey:@"MANUAL_REOPEN"])
 		return NO;
 	if (![Utils isSandboxed]) {
-		NSString* appBundleIdentifier = @"com.robtop.geometryjump";
+		NSString* appBundleIdentifier = @"be.dimisaio.dindegdps22";
 		[[LSApplicationWorkspace defaultWorkspace] openApplicationWithBundleID:appBundleIdentifier];
 		return YES;
 	}
@@ -151,8 +151,8 @@ Class LCSharedUtilsClass = nil;
 	}
 
 	NSFileManager* fm = [NSFileManager defaultManager];
-	NSURL* justIncase = [[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"];
-	NSURL* bundleProvision = [[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app/embedded.mobileprovision"];
+	NSURL* justIncase = [[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"];
+	NSURL* bundleProvision = [[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app/embedded.mobileprovision"];
 	NSURL* provisionURL = [[LCPath docPath] URLByAppendingPathComponent:@"embedded.mobileprovision"];
 	if ([[NSFileManager defaultManager] fileExistsAtPath:provisionURL.path]) {
 		AppLog(@"Found provision in documents, copying to GD bundle...");
@@ -278,7 +278,7 @@ Class LCSharedUtilsClass = nil;
 }
 
 + (void)changeMainExecutableTo:(NSString*)exec error:(NSError**)error {
-	NSURL* infoPath = [self.appGroupPath URLByAppendingPathComponent:@"Apps/com.geode.launcher/App.app/Info.plist"];
+	NSURL* infoPath = [self.appGroupPath URLByAppendingPathComponent:@"Apps/be.dimisaio.dindem/App.app/Info.plist"];
 	NSMutableDictionary* infoDict = [NSMutableDictionary dictionaryWithContentsOfURL:infoPath];
 	if (!infoDict)
 		return;

@@ -76,7 +76,7 @@ OSStatus new_SecItemDelete(CFDictionaryRef query){
 void SecItemGuestHooksInit(void)  {
     containerId = [NSString stringWithUTF8String:getenv("HOME")].lastPathComponent;
     NSString* groupId = [GCSharedUtils teamIdentifier];
-    accessGroup = [NSString stringWithFormat:@"%@.com.geode.launcher.shared", groupId];
+    accessGroup = [NSString stringWithFormat:@"%@.be.dimisaio.dindem.shared", groupId];
     
     // check if the keychain access group is available
     NSDictionary *query = @{

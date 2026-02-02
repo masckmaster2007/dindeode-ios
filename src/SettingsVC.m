@@ -441,7 +441,7 @@
 		} else if (indexPath.row == 2) {
 			NSString* infoPlistPath;
 			if (![Utils isSandboxed]) {
-				infoPlistPath = [[Utils getGDBundlePath] stringByAppendingPathComponent:@"GeometryJump.app/Info.plist"];
+				infoPlistPath = [[Utils getGDBundlePath] stringByAppendingPathComponent:@"DindeGDPS.app/Info.plist"];
 			} else {
 				infoPlistPath = [[[LCPath bundlePath] URLByAppendingPathComponent:[Utils gdBundleName]] URLByAppendingPathComponent:@"Info.plist"].path;
 			}
