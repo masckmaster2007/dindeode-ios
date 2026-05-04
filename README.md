@@ -1,3 +1,6 @@
+# DindeGDPS Notice
+ts stuff hard 4 me. credz to speedyfriend for the help
+
 # Geode iOS Launcher
 Manages installing and launching **Geometry Dash** with **Geode** for iOS.
 

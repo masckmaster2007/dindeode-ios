@@ -531,57 +531,16 @@
 			[downloadTask resume];
 			return;
 		}
-		// this is all so unnecessary, just use import IPA if you're that desperate
-		NSData* b64Data = [[NSData alloc] initWithBase64EncodedString:@"__KEY_PART2__" options:0];
-		if (!b64Data) {
-			[Utils showError:self title:@"launcher.error.non".loc error:nil];
-			[self updateState];
-			return;
-		}
-		NSString* b64 = [[NSString alloc] initWithData:b64Data encoding:NSUTF8StringEncoding];
-		[self.progressBar setHidden:NO];
-		NSURLRequest* request2 = [NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@", b64]]];
-		NSURLSession* session2 = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
-		NSURLSessionDataTask* dataTask = [session2 dataTaskWithRequest:request2 completionHandler:^(NSData* data, NSURLResponse* response, NSError* error) {
-			if (error) {
-				return dispatch_async(dispatch_get_main_queue(), ^{
-					[Utils showError:self title:@"launcher.error.req-failed".loc error:error];
-					[self updateState];
-					AppLog(@"Error during request: %@", error);
-				});
-			}
-			if (data) {
-				NSString* keyData = [[NSString stringWithFormat:@"%@__KEY_PART1__", [[NSString alloc] initWithData:data
-																										  encoding:NSUTF8StringEncoding]] stringByReplacingOccurrencesOfString:@"\n"
-																																									withString:@""];
-				NSString* eStr = @"__DOWNLOAD_LINK__";
-				NSData* dataToDecrypt = [[NSData alloc] initWithBase64EncodedString:eStr options:0];
-				NSString* decoded = [[NSString alloc] initWithData:[Utils decryptData:dataToDecrypt withKey:keyData] encoding:NSUTF8StringEncoding];
-
-				NSData* decodedb64Data = [[NSData alloc] initWithBase64EncodedString:decoded options:0];
-				if (!decodedb64Data) {
-					dispatch_async(dispatch_get_main_queue(), ^{
-						[Utils showError:self title:@"launcher.error.req-failed".loc error:nil];
-						[self updateState];
-						AppLog(@"Error during decoding, data is invalid.");
-					});
-					return;
-				}
-				NSString* decb64 = [[NSString alloc] initWithData:decodedb64Data encoding:NSUTF8StringEncoding];
-				dispatch_async(dispatch_get_main_queue(), ^{
-					NSURLSession* session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:self delegateQueue:nil];
-					downloadTask = [session downloadTaskWithURL:[NSURL URLWithString:decb64]];
-					[downloadTask resume];
-				});
-			} else {
-				dispatch_async(dispatch_get_main_queue(), ^{
-					[Utils showError:self title:@"launcher.error.req-failed".loc error:nil];
-					[self updateState];
-					AppLog(@"Error during request, data is invalid.");
-				});
-			}
-		}];
-		[dataTask resume];
+		UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"DindeGDPS IPA Required" message:@"The File Manager will open. Please import the latest DindeGDPS IPA!"
+																preferredStyle:UIAlertControllerStyleAlert];
+		[alert addAction:[UIAlertAction actionWithTitle:@"Import IPA" style:UIAlertActionStyleDefault handler:^(UIAlertAction* _Nonnull action) {
+				   UIDocumentPickerViewController* picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[ [UTType typeWithFilenameExtension:@"ipa"] ]
+																														asCopy:YES];
+				   picker.delegate = self;
+				   [self presentViewController:picker animated:YES completion:nil];
+			   }]];
+		[alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+		[self presentViewController:alert animated:YES completion:nil];
 	}
 }
 
@@ -610,7 +569,7 @@
 								  if (status != 0) {
 									  return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 								  }
-								  LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+								  LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 								  [app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
 									  if (signError)
 										  return completionHandler(NO, signError);
@@ -649,7 +608,7 @@
 							if (status != 0) {
 								return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 							}
-							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 							[Patcher patchGeode:^(BOOL success, NSString *error) {
 								AppLog(@"Patched Geode (Success: %@, Error: %@)", (success) ? @"YES" : @"NO", error);
 								[app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
@@ -692,7 +651,7 @@
 							if (status != 0) {
 								return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 							}
-							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 							[Patcher patchGeode:^(BOOL success, NSString *error) {
 								AppLog(@"Patched Geode (Success: %@, Error: %@)", (success) ? @"YES" : @"NO", error);
 								[app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
@@ -758,7 +717,7 @@
 								  if (status != 0) {
 									  return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 								  }
-								  LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+								  LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 								  [app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
 									  if (signError)
 										  return completionHandler(NO, signError);
@@ -806,7 +765,7 @@
 							if (status != 0) {
 								return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 							}
-							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 							[Patcher patchGeode:^(BOOL success, NSString *error) {
 								AppLog(@"Patched Geode (Success: %@, Error: %@)", (success) ? @"YES" : @"NO", error);
 								[app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
@@ -855,7 +814,7 @@
 							if (status != 0) {
 								return completionHandler(NO, @"launcher.error.sign.invalidcert2".loc);
 							}
-							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app"].path];
+							LCAppInfo* app = [[LCAppInfo alloc] initWithBundlePath:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app"].path];
 							[Patcher patchGeode:^(BOOL success, NSString *error) {
 								AppLog(@"Patched Geode (Success: %@, Error: %@)", (success) ? @"YES" : @"NO", error);
 								[app patchExecAndSignIfNeedWithCompletionHandler:^(BOOL signSuccess, NSString* signError) {
@@ -1316,6 +1275,10 @@
 
 - (void)documentPicker:(UIDocumentPickerViewController*)controller didPickDocumentsAtURLs:(nonnull NSArray<NSURL*>*)urls {
 	NSURL* folderURL = urls.firstObject;
+	if ([folderURL.pathExtension.lowercaseString isEqualToString:@"ipa"]) {
+		[VerifyInstall startGDInstall:self url:folderURL];
+		return;
+	}
 	// mini "hack" to get around this
 	if ([folderURL startAccessingSecurityScopedResource]) {
 		NSFileManager* fm = [NSFileManager defaultManager];

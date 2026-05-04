@@ -1,4 +1,4 @@
-Package: com.geode.launcher
+Package: be.dimisaio.dindem
 Name: Geode
 Version: 1.5.4
 Architecture: iphoneos-arm

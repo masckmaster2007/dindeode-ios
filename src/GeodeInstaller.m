@@ -243,7 +243,7 @@ typedef void (^DecompressCompletion)(NSError* _Nullable error);
 	if (![Utils isSandboxed]) {
 		gdPlist = [NSDictionary dictionaryWithContentsOfFile:[[Utils getGDBundlePath] stringByAppendingPathComponent:@"GeometryJump.app/Info.plist"]];
 	} else {
-		gdPlist = [NSDictionary dictionaryWithContentsOfURL:[[LCPath bundlePath] URLByAppendingPathComponent:@"com.robtop.geometryjump.app/Info.plist"]];
+		gdPlist = [NSDictionary dictionaryWithContentsOfURL:[[LCPath bundlePath] URLByAppendingPathComponent:@"be.dimisaio.dindegdps22.app/Info.plist"]];
 	}
 	NSString* hash = gdPlist[@"CFBundleShortVersionString"];
 	AppLog(@"Versions: %@ & %@", hash, GD_VERSION);
