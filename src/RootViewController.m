@@ -531,16 +531,11 @@
 			[downloadTask resume];
 			return;
 		}
-		UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"DindeGDPS IPA Required" message:@"The File Manager will open. Please import the latest DindeGDPS IPA!"
-																preferredStyle:UIAlertControllerStyleAlert];
-		[alert addAction:[UIAlertAction actionWithTitle:@"Import IPA" style:UIAlertActionStyleDefault handler:^(UIAlertAction* _Nonnull action) {
-				   UIDocumentPickerViewController* picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[ [UTType typeWithFilenameExtension:@"ipa"] ]
+
+		UIDocumentPickerViewController* picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[ [UTType typeWithFilenameExtension:@"ipa"] ]
 																														asCopy:YES];
 				   picker.delegate = self;
 				   [self presentViewController:picker animated:YES completion:nil];
-			   }]];
-		[alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
-		[self presentViewController:alert animated:YES completion:nil];
 	}
 }
 
