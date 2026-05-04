@@ -10,7 +10,7 @@
 "common.exit" = "Exit";
 
 // Intro
-"intro.s1.title" = "Welcome to Geode!";
+"intro.s1.title" = "Welcome to Dindeode!";
 "intro.s1.subtitle" = "Let's get you started.";
 
 "intro.update.title" = "Update available!";

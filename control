@@ -1,8 +1,8 @@
 Package: be.dimisaio.dindem
-Name: Geode
+Name: Dindeode
 Version: 1.5.4
 Architecture: iphoneos-arm
-Description: Geode launcher helper for iOS!
-Maintainer: Firee
+Description: Geode launcher helper for iOS, DindeGDPS edition!
+Maintainer: jeantasoeur
 Author: Firee
 Section: Utilities
