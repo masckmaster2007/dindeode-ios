@@ -238,18 +238,21 @@ kern_return_t pe_v1(void) {
             mach_vm_address_t search_mapping_address =
                 search_mappings[--search_mappings_count];
 
-            LOG("[ClearSword] dealloc mapping: %#llx",
+            LOG("[ClearSword] BEFORE mach_vm_deallocate: %#llx",
                 (unsigned long long)search_mapping_address);
 
-            mach_vm_deallocate(
+            kern_return_t dealloc_kr = mach_vm_deallocate(
                 mach_task_self(),
                 search_mapping_address,
                 search_mapping_size
             );
+
+            LOG("[ClearSword] AFTER mach_vm_deallocate: %#llx -> %d",
+                (unsigned long long)search_mapping_address,
+                dealloc_kr);
         }
 
-        LOG("[ClearSword] AFTER search-mapping deallocation");
-
+        LOG("[ClearSword] search-mapping cleanup COMPLETE");
         // if (g_ctx.is_a18_devices) {
         //     surface_munlock(wired_mapping);
         // }
@@ -259,9 +262,12 @@ kern_return_t pe_v1(void) {
             break;
         }
     }
-
+    LOG("[ClearSword] Freeing RBFR");
     free(read_buffer);
+    LOG("[ClearSword] Freeing WBFR");
     free(write_buffer);
+
+    LOG("[ClearSword] pe_v1 RETURN KERN_SUCCESS");
     return KERN_SUCCESS;
 }
 
