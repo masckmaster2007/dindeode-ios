@@ -47,7 +47,7 @@ jobs:
           fi
 
           echo "installing sdk !!"
-          $THEOS/bin/install-sdk iPhoneOS16.5
+          $THEOS/bin/install-sdk iPhoneOS17.5
           
       - name: Build
         run: |
