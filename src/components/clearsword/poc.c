@@ -231,6 +231,11 @@ kern_return_t pe_v1(void) {
         sockets_release();
         LOG("[ClearSword] AFTER sockets_release");
 
+        LOG("[ClearSword] Releasing IOSurface locks before dealloc");
+        for (size_t i = 0; i < search_mappings_count; i++) {
+            surface_munlock(search_mappings[i]);
+        }
+
         // deallocate search mappings
         LOG("[ClearSword] BEFORE search-mapping deallocation");
 
