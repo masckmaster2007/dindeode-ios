@@ -14,23 +14,18 @@ int enable_self_jit(void) {
     int r = clearsword_run();
     if (r != 0) return r;
 
-    // Already CS_DEBUGGED? nothing to do
-    int flags = 0;
-    csops(getpid(), 0, &flags, sizeof(flags));
-    if (flags & CS_DEBUGGED) return 0;
-
     uint64_t my_proc = find_self_proc();
+    LOG_DEBUG("my_proc = 0x%llx", (unsigned long long)my_proc);
+
     if (!my_proc) return ESRCH;
 
-    // proc_ro is a read-only mirror of proc — csflags lives there on iOS 15+
-    uint64_t proc_ro = 0;
-    kread_length(my_proc + g_offsets.proc_p_ro, &proc_ro, sizeof(proc_ro));
+    uint64_t proc_ro = early_kread64(my_proc + g_offsets.proc_p_ro);
+    LOG_DEBUG("proc_ro = 0x%llx", (unsigned long long)proc_ro);
+
     if (!proc_ro) return EFAULT;
 
-    uint32_t csflags = 0;
-    kread_length(proc_ro + PROC_RO_CSFLAGS_OFFSET, &csflags, sizeof(csflags));
-    csflags |= CS_DEBUGGED;
-    kwrite_length(proc_ro + PROC_RO_CSFLAGS_OFFSET, &csflags, sizeof(csflags));
+    uint64_t task = early_kread64(proc_ro + g_offsets.proc_ro_task);
+    LOG_DEBUG("task = 0x%llx", (unsigned long long)task);
 
     return 0;
 }
