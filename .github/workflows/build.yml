@@ -1,8 +1,6 @@
 name: Build
-
 permissions:
   contents: write
-
 on:
   push:
     branches:
@@ -13,156 +11,90 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: macos-latest
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Xcode Setup
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install Procursus
-        uses: dhinakg/procursus-action@main
-        with:
-          packages: ldid findutils sed coreutils make
-
-      - name: Install GNU Make
-        run: |
-          brew install make
-          echo "PATH=$(brew --prefix make)/libexec/gnubin:$PATH" >> "$GITHUB_ENV"
 
       - name: Install Theos
         run: |
-          set -eux
+          # uncomment for swift
+          #sudo apt-get install -y libtinfo6
 
-          export BASEDIR="$(pwd)"
-          export THEOS="${BASEDIR}/theos"
+          echo "installing theos"
+          export THEOS=$(mktemp -d theos.XXXXX)
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
 
-          echo "THEOS=$THEOS" >> "$GITHUB_ENV"
+          # set architecture for the download urls below
+          export ARCH=$(uname -m)
 
-          mkdir -p "$THEOS"
+          # depth=1 for SPEED
+          git clone --recursive https://github.com/theos/theos.git $THEOS --depth=1
 
-          curl -fsSL \
-            https://raw.githubusercontent.com/theos/theos/master/bin/install-theos \
-            -o install-theos.sh
+          # uncomment for swift
+          #curl -sL https://github.com/kabiroberai/swift-toolchain-linux/releases/download/v2.3.0/swift-5.8-ubuntu20.04.tar.xz | tar -xJvf - -C $THEOS/toolchain/
 
-          # Prevent the Theos installer from attempting to download
-          # SDKs through the GitHub API. We install the SDK manually below.
-          gsed -E \
-            "/^\s*get_theos\s*$/,+1 s/^(\s*)(get_sdks)\s*$/\1mkdir -p \${THEOS}\/sdks\n\1touch \${THEOS}\/sdks\/sdk\n\1\2/g" \
-            -i install-theos.sh
+          echo "downloading llvm toolchain"
+          curl -sL https://github.com/L1ghtmann/llvm-project/releases/latest/download/iOSToolchain-$ARCH.tar.xz | tar -xJvf - -C $THEOS/toolchain/
 
-          bash install-theos.sh
+          # yoinked from theos install script
+          if [[ -x $THEOS/toolchain/linux/iphone/bin/clang ]]; then
+            echo "Successfully installed the toolchain!"
+          else
+            echo "Something appears to have gone wrong -- the toolchain is not accessible. Please try again."
+            exit 7
+          fi
 
-      - name: Install iPhoneOS 16.5 SDK
-        run: |
-          set -eux
-
-          export THEOS="$GITHUB_WORKSPACE/theos"
-
-          mkdir -p "$THEOS/sdks"
-
-          curl -L \
-            https://github.com/theos/sdks/releases/latest/download/iPhoneOS16.5.sdk.tar.xz \
-            -o /tmp/iPhoneOS16.5.sdk.tar.xz
-
-          tar -xJf \
-            /tmp/iPhoneOS16.5.sdk.tar.xz \
-            -C "$THEOS/sdks"
-
-          rm -f /tmp/iPhoneOS16.5.sdk.tar.xz
-
-          echo "Installed SDKs:"
-          ls -la "$THEOS/sdks"
-
-      - name: Verify SDK
-        run: |
-          set -eux
-
-          export THEOS="$GITHUB_WORKSPACE/theos"
-
-          test -d "$THEOS/sdks/iPhoneOS16.5.sdk"
-
-          echo "Checking for fileport.h..."
-          find "$THEOS/sdks/iPhoneOS16.5.sdk" \
-            -name "fileport.h" \
-            -print
-
-          echo "Checking Theos toolchain..."
-          find "$THEOS/toolchain" -maxdepth 3 -type f -name clang -print
-
+          echo "installing sdk !!"
+          $THEOS/bin/install-sdk iPhoneOS16.5
+          
       - name: Build
         run: |
-          set -eux
-
-          export THEOS="$GITHUB_WORKSPACE/theos"
-
-          gmake -j"$(sysctl -n hw.logicalcpu)" \
-            package \
-            FINALPACKAGE=1 \
-            STRIP=0
-
-          gmake clean
-
-          gmake -j"$(sysctl -n hw.logicalcpu)" \
-            package \
-            FINALPACKAGE=1 \
-            STRIP=0 \
-            TROLLSTORE=1
+          git submodule update --init --recursive
+          make package FINALPACKAGE=1 STRIP=0
+          make clean
+          make package FINALPACKAGE=1 STRIP=0 TROLLSTORE=1
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@main
         with:
           name: GeodeLauncher
           path: packages/*.*
-
   publish:
     name: Publish
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main'
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Declare Version Variables
-        id: ref
-        run: |
-          echo "version=$(cat VERSION | xargs)" >> "$GITHUB_OUTPUT"
-          echo "hash=$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_OUTPUT"
+    - name: Declare Version Variables
+      id: ref
+      run: |
+        echo "version=$(cat VERSION | xargs)" >> $GITHUB_OUTPUT
+        echo "hash=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: "${{ github.workspace }}/artifacts"
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ${{ github.workspace }}/artifacts
 
-      - name: Rename files
-        run: |
-          mv \
-            "artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.version }}.ipa" \
-            "artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.hash }}.ipa"
+    - name: Rename files
+      run: |
+        mv artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.version }}.ipa artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.hash }}.ipa
+        mv artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.version }}.tipa artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.hash }}.tipa
 
-          mv \
-            "artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.version }}.tipa" \
-            "artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.hash }}.tipa"
-
-      - name: Update Development Release
-        uses: andelf/nightly-release@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: nightly
-          name: Development Release
-          body: |
-            Geode iOS development release for commit ${{ github.sha }}.
-            This is meant for developers.
-            Please look below this release for the latest stable release.
-          files: |
-            ./artifacts/GeodeLauncher/*.ipa
-            ./artifacts/GeodeLauncher/*.tipa
+    - name: Update Development Release
+      uses: andelf/nightly-release@main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        #tag_name: v999999.9.9 # thanks cvolton
+        tag_name: nightly
+        name: 'Development Release'
+        body: Geode iOS development release for commit ${{ github.sha }}. This is meant for developers. Please look below this release for the latest stable release.
+        files: |
+          ./artifacts/GeodeLauncher/*.ipa
+          ./artifacts/GeodeLauncher/*.tipa
