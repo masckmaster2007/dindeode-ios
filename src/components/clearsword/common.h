@@ -10,9 +10,10 @@
 #include <stdio.h>
 #include <sys/syslimits.h>
 #include <sys/uio.h>
+#include <os/log.h>
 
-#define LOG(fmt, ...) fprintf(stderr, "[i] " fmt "\n", ##__VA_ARGS__)
-#define LOG_ERR(fmt, ...) fprintf(stderr, "[err] " fmt "\n", ##__VA_ARGS__)
+#define LOG(fmt, ...) os_log(OS_LOG_DEFAULT, "[ClearSword] " fmt, ##__VA_ARGS__)
+#define LOG_ERR(fmt, ...) os_log_error(OS_LOG_DEFAULT, "[ClearSword] " fmt, ##__VA_ARGS__)
 
 #define DEBUG 1  // TODO
 #ifdef DEBUG
