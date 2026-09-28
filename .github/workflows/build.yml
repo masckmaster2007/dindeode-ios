@@ -16,17 +16,17 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Xcode Setup
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
-      - name: Install Procursus tools
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Procursus
         uses: dhinakg/procursus-action@main
         with:
           packages: ldid findutils sed coreutils make
@@ -40,7 +40,9 @@ jobs:
         run: |
           set -eux
 
-          export THEOS="$GITHUB_WORKSPACE/theos"
+          export BASEDIR="$(pwd)"
+          export THEOS="${BASEDIR}/theos"
+
           echo "THEOS=$THEOS" >> "$GITHUB_ENV"
 
           mkdir -p "$THEOS"
@@ -49,37 +51,56 @@ jobs:
             https://raw.githubusercontent.com/theos/theos/master/bin/install-theos \
             -o install-theos.sh
 
+          # Prevent the Theos installer from attempting to download
+          # SDKs through the GitHub API. We install the SDK manually below.
+          gsed -E \
+            "/^\s*get_theos\s*$/,+1 s/^(\s*)(get_sdks)\s*$/\1mkdir -p \${THEOS}\/sdks\n\1touch \${THEOS}\/sdks\/sdk\n\1\2/g" \
+            -i install-theos.sh
+
           bash install-theos.sh
 
-      - name: Install iOS 16.5 SDK
+      - name: Install iPhoneOS 16.5 SDK
         run: |
           set -eux
+
+          export THEOS="$GITHUB_WORKSPACE/theos"
+
+          mkdir -p "$THEOS/sdks"
 
           curl -L \
             https://github.com/theos/sdks/releases/latest/download/iPhoneOS16.5.sdk.tar.xz \
             -o /tmp/iPhoneOS16.5.sdk.tar.xz
 
-          tar -xJf /tmp/iPhoneOS16.5.sdk.tar.xz \
+          tar -xJf \
+            /tmp/iPhoneOS16.5.sdk.tar.xz \
             -C "$THEOS/sdks"
 
-          rm /tmp/iPhoneOS16.5.sdk.tar.xz
+          rm -f /tmp/iPhoneOS16.5.sdk.tar.xz
+
+          echo "Installed SDKs:"
+          ls -la "$THEOS/sdks"
 
       - name: Verify SDK
         run: |
           set -eux
 
-          echo "THEOS=$THEOS"
+          export THEOS="$GITHUB_WORKSPACE/theos"
 
-          ls -la "$THEOS/sdks"
+          test -d "$THEOS/sdks/iPhoneOS16.5.sdk"
 
           echo "Checking for fileport.h..."
           find "$THEOS/sdks/iPhoneOS16.5.sdk" \
             -name "fileport.h" \
             -print
 
+          echo "Checking Theos toolchain..."
+          find "$THEOS/toolchain" -maxdepth 3 -type f -name clang -print
+
       - name: Build
         run: |
           set -eux
+
+          export THEOS="$GITHUB_WORKSPACE/theos"
 
           gmake -j"$(sysctl -n hw.logicalcpu)" \
             package \
@@ -102,7 +123,7 @@ jobs:
 
   publish:
     name: Publish
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main'
 
