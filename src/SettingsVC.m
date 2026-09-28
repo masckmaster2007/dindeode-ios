@@ -294,14 +294,14 @@ extern NSString *lcAppUrlScheme;
 	if (!access(tsPath.UTF8String, F_OK)) {
 		return @[
 			@"jit.jit-enabler.default".loc, @"jit.jit-enabler.trollstore".loc, @"jit.jit-enabler.stikjit".loc, @"jit.jit-enabler.jitstreamereb".loc, @"jit.jit-enabler.sidejit".loc,
-			@"jit.jit-enabler.sidestore".loc, @"", @"jit.jit-enabler.custom".loc
+			@"jit.jit-enabler.sidestore".loc, @"", @"jit.jit-enabler.custom".loc, @"jit.jit-enabler.clearsword".loc
 		];
 	} else if (@available(iOS 26.0, *)) {
-		return @[@"jit.jit-enabler.default".loc, @"", @"jit.jit-enabler.stikjit".loc, @"", @"", @"", @"", @"jit.jit-enabler.custom".loc];
+		return @[@"jit.jit-enabler.default".loc, @"", @"jit.jit-enabler.stikjit".loc, @"", @"", @"", @"", @"jit.jit-enabler.custom".loc, @"jit.jit-enabler.clearsword".loc];
 	} else {
 		return @[
 			@"jit.jit-enabler.default".loc, @"", @"jit.jit-enabler.stikjit".loc, @"jit.jit-enabler.jitstreamereb".loc, @"jit.jit-enabler.sidejit".loc,
-			@"jit.jit-enabler.sidestore".loc, @"", @"jit.jit-enabler.custom".loc
+			@"jit.jit-enabler.sidestore".loc, @"", @"jit.jit-enabler.custom".loc, @"jit.jit-enabler.clearsword".loc
 		];
 	}
 }
@@ -323,6 +323,8 @@ extern NSString *lcAppUrlScheme;
 		return @"jit.footer.sidestore".loc;
 	case 6: // LiveContainer
 		return @"jit.footer.livecontainer".loc;
+	case 8:
+		return @"jit.footer.clearsword".loc;
 	}
 }
 

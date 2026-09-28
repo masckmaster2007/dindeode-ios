@@ -6,6 +6,7 @@
 #import "LCUtils/utils.h"
 #import "Utils.h"
 #import "components/LogUtils.h"
+#import "components/ClearSword.h"
 #import <Foundation/Foundation.h>
 
 #include <mach-o/dyld.h>
@@ -304,6 +305,9 @@ static NSString* invokeAppMain(NSString* selectedApp, NSString* selectedContaine
 	NSString* appError = nil;
 	if (![gcUserDefaults boolForKey:@"JITLESS"]) {
 		// First of all, let's check if we have JIT
+		if ([gcUserDefaults integerForKey:@"JIT_ENABLER"] == 8) {
+        	enable_self_jit();
+		}
 		for (int i = 0; i < 10 && !checkJITEnabled(); i++) {
 			usleep(1000 * 100);
 		}

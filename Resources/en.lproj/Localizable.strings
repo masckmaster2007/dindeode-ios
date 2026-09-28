@@ -146,6 +146,7 @@
 "jit.jit-enabler.trollstore" = "TrollStore";
 "jit.jit-enabler.sidestore" = "SideStore JIT";
 "jit.jit-enabler.livecontainer" = "LiveContainer";
+"jit.jit-enabler.clearsword" = "ClearSword";
 "jit.jit-enabler.custom" = "Custom";
 "jit.warning" = "You should only launch Geode with JIT if you want to launch Geometry Dash! Opening the launcher with JIT is only necessary in that case. If this app is opened with JIT no matter what, you can disable this notice in settings.";
 
@@ -156,6 +157,7 @@
 "jit.footer.trollstore" = "Geode will utilize TrollStore to enable JIT. Make sure you enable the \"URL Scheme Enabled\" setting in TrollStore, otherwise Geode will open the Apple Magnifier app.";
 "jit.footer.sidestore" = "Geode will open SideStore when launched to enable JIT.";
 "jit.footer.livecontainer" = "Ensure that you enabled \"Launch with JIT\" for the Geode app in LiveContainer.";
+"jit.footer.clearsword" = "This will trigger ClearSword for JIT. iOS 18.7.1 or lower, or 26.0.1 or lower for iOS 26.";
 
 "jitless" = "JIT-Less";
 "jitless.enterprise" = "Enterprise Mode";
