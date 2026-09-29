@@ -11,6 +11,7 @@
 #import <IOSurface/IOSurfaceRef.h>
 #include <sys/uio.h>
 void IOSurfacePrefetchPages(IOSurfaceRef surface);
+#define LOG(fmt, ...) os_log(OS_LOG_DEFAULT, "[ClearSword] " fmt, ##__VA_ARGS__)
 
 #define FAILURE(c) {fflush(stdout); sleep(2); exit(c);}
 #define PRINT_VAR(var) {printf(#var ": %#llx\n", var); fflush(stdout); sleep(2);}
