@@ -188,7 +188,7 @@ int enable_self_jit(void) {
         write(sync_pipe[1], "x", 1);
         close(sync_pipe[1]); close(sv[0]);
         waitpid(pid, NULL, 0);
-        return ECOMM;
+        return EIO;
     }
     close(sv[0]);
 
