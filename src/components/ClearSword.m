@@ -1,5 +1,10 @@
+#include "ClearSword.h"
 #include "../LCUtils/utils.h"   // CS_DEBUGGED, csops
-#include "clearsword/darksword.c"  // g_offsets, g_ctx
+#include "clearsword/poc.h"     // clearsword_run()
+#include "clearsword/kmem.h"    // find_self_proc()
+#include "clearsword/krw.h"     // early_kread64, kread_length, kwrite_length
+#include "clearsword/common.h"  // g_offsets, g_ctx
+#include "clearsword/darksword.h"
 
 #include <unistd.h>
 #include <errno.h>
