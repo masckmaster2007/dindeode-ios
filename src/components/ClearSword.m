@@ -10,6 +10,7 @@
 
 // iOS 17.x: proc_ro.csflags
 #define PROC_RO_CSFLAGS_OFFSET 0x1C
+#define LOG(fmt, ...) os_log(OS_LOG_DEFAULT, "[ClearSword] " fmt, ##__VA_ARGS__)
 
 int enable_self_jit(void) {
     LOG("================================");
