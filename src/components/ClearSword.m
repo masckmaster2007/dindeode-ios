@@ -1,14 +1,12 @@
 #include "ClearSword.h"
-#include "../LCUtils/utils.h"   // CS_DEBUGGED, csops
-#include "clearsword/poc.h"     // clearsword_run()
-#include "clearsword/kmem.h"    // find_self_proc()
-#include "clearsword/krw.h"     // early_kread64, kread_length, kwrite_length
-#include "clearsword/common.h"  // g_offsets, g_ctx
+#include "../LCUtils/utils.h"
 #include "clearsword/darksword.h"
 
 #include <unistd.h>
 #include <errno.h>
 #include <os/log.h>
+#include <stdint.h>
+#include <string.h>
 
 // iOS 17.x: proc_ro.csflags
 #define PROC_RO_CSFLAGS_OFFSET 0x1C
@@ -18,30 +16,25 @@ int enable_self_jit(void) {
     LOG("enable_self_jit() ENTER");
     LOG("================================");
 
-    /*
-     * ClearSword must initialize the kernel R/W primitives first.
-     */
-    LOG("calling clearsword_run()");
+    LOG("calling go()");
 
     int r = go();
 
-    LOG("clearsword_run() returned %d", r);
+    LOG("go() returned %d", r);
 
     if (r != 0) {
-        LOG("clearsword_run failed, aborting");
+        LOG("go() failed, aborting");
         return r;
     }
 
-    LOG("ClearSword initialized successfully");
+    LOG("DarkSword initialized successfully");
 
-    /*
-     * Check whether the process already has CS_DEBUGGED.
-     */
     int flags = 0;
 
     LOG("checking current csflags with csops()");
 
-    int csops_result = csops(getpid(), 0, &flags, sizeof(flags));
+    int csops_result =
+        csops(getpid(), 0, &flags, sizeof(flags));
 
     LOG(
         "csops() returned %d, flags = 0x%x",
@@ -56,15 +49,13 @@ int enable_self_jit(void) {
 
     LOG("CS_DEBUGGED is not currently set");
 
-    /*
-     * Locate our proc.
-     */
     LOG("calling find_self_proc()");
 
-    uint64_t my_proc = find_self_proc();
+    uint64_t my_proc =
+        find_self_proc();
 
     LOG(
-        "find_self_proc() returned my_proc = 0x%llx",
+        "find_self_proc() returned 0x%llx",
         (unsigned long long)my_proc
     );
 
@@ -73,23 +64,16 @@ int enable_self_jit(void) {
         return ESRCH;
     }
 
-    /*
-     * proc->p_ro
-     *
-     * ClearSword uses proc_p_ro = 0x18 on this OS family.
-     */
-    LOG(
-        "reading proc_ro at my_proc + 0x%llx",
-        (unsigned long long)g_offsets.proc_p_ro
-    );
-
     uint64_t proc_ro = 0;
 
-    kread_length(
-        my_proc + g_offsets.proc_p_ro,
-        &proc_ro,
-        sizeof(proc_ro)
+    LOG(
+        "reading proc_ro at my_proc + 0x18"
     );
+
+    proc_ro =
+        early_kread64(
+            my_proc + 0x18
+        );
 
     LOG(
         "proc_ro = 0x%llx",
@@ -101,30 +85,25 @@ int enable_self_jit(void) {
         return EFAULT;
     }
 
-    /*
-     * Read the task as an additional sanity check before touching csflags.
-     */
     uint64_t task = 0;
 
-    LOG(
-        "reading task at proc_ro + 0x%llx",
-        (unsigned long long)g_offsets.proc_ro_task
-    );
+    LOG("reading task at proc_ro + 0x8");
 
-    kread_length(
-        proc_ro + g_offsets.proc_ro_task,
-        &task,
-        sizeof(task)
-    );
+    task =
+        early_kread64(
+            proc_ro + 0x8
+        );
 
     LOG(
         "task = 0x%llx",
         (unsigned long long)task
     );
 
-    /*
-     * proc_ro.csflags is at +0x1C on iOS 17.3.1.
-     */
+    if (!task) {
+        LOG("ERROR: task is NULL");
+        return EFAULT;
+    }
+
     uint32_t csflags = 0;
 
     LOG(
@@ -132,7 +111,7 @@ int enable_self_jit(void) {
         PROC_RO_CSFLAGS_OFFSET
     );
 
-    kread_length(
+    early_kread(
         proc_ro + PROC_RO_CSFLAGS_OFFSET,
         &csflags,
         sizeof(csflags)
@@ -143,34 +122,58 @@ int enable_self_jit(void) {
         csflags
     );
 
-    /*
-     * Preserve all existing flags and add CS_DEBUGGED.
-     */
-    uint32_t new_csflags = csflags | CS_DEBUGGED;
+    uint32_t new_csflags =
+        csflags | CS_DEBUGGED;
 
     LOG(
-        "csflags after  = 0x%08x",
+        "csflags after = 0x%08x",
         new_csflags
     );
 
-    LOG("writing CS_DEBUGGED...");
+    /*
+     * DarkSword's early write primitive writes 0x20 bytes.
+     * Read the existing 0x20-byte region, modify only the
+     * 4-byte csflags field at +0x1C, then write the whole
+     * buffer back.
+     */
+    uint8_t writeBuf[EARLY_KRW_LENGTH] = {0};
 
-    kwrite_length(
+    LOG(
+        "reading 0x20-byte proc_ro tail before write"
+    );
+
+    early_kread(
         proc_ro + PROC_RO_CSFLAGS_OFFSET,
+        writeBuf,
+        EARLY_KRW_LENGTH
+    );
+
+    memcpy(
+        writeBuf,
         &new_csflags,
         sizeof(new_csflags)
     );
 
+    LOG("writing CS_DEBUGGED");
+
+    early_kwrite32bytes(
+        proc_ro + PROC_RO_CSFLAGS_OFFSET,
+        writeBuf
+    );
+
     LOG("csflags write completed");
 
-    /*
-     * Verify through csops().
-     */
     flags = 0;
 
     LOG("verifying with csops()");
 
-    csops_result = csops(getpid(), 0, &flags, sizeof(flags));
+    csops_result =
+        csops(
+            getpid(),
+            0,
+            &flags,
+            sizeof(flags)
+        );
 
     LOG(
         "verification: csops() = %d, flags = 0x%x",
@@ -178,11 +181,17 @@ int enable_self_jit(void) {
         flags
     );
 
-    if (csops_result == 0 && (flags & CS_DEBUGGED)) {
+    if (
+        csops_result == 0 &&
+        (flags & CS_DEBUGGED)
+    ) {
         LOG("SUCCESS: CS_DEBUGGED is set");
         return 0;
     }
 
-    LOG("WARNING: CS_DEBUGGED is still not visible through csops()");
+    LOG(
+        "WARNING: CS_DEBUGGED is still not visible through csops()"
+    );
+
     return EACCES;
 }

