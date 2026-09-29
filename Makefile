@@ -15,8 +15,17 @@ else
 Geode_CODESIGN_FLAGS = -Sentitlements.xml
 endif
 
-Geode_FILES = $(wildcard src/*.m) $(wildcard src/*.mm) $(wildcard src/views/*.m) $(wildcard src/components/*.m) $(wildcard src/LCUtils/*.m) $(wildcard src/components/clearsword/*.c) fishhook/fishhook.c $(wildcard MSColorPicker/MSColorPicker/*.m) $(wildcard GCDWebServer/GCDWebServer/*/*.m)
-Geode_FRAMEWORKS = UIKit CoreGraphics Security
+Geode_FILES = $(wildcard src/*.m) \
+    $(wildcard src/*.mm) \
+    $(wildcard src/views/*.m) \
+    $(wildcard src/components/*.m) \
+    $(wildcard src/LCUtils/*.m) \
+    $(wildcard src/components/clearsword/*.c) \
+    $(wildcard src/components/clearsword/*.m) \
+    fishhook/fishhook.c \
+    $(wildcard MSColorPicker/MSColorPicker/*.m) \
+    $(wildcard GCDWebServer/GCDWebServer/*/*.m)
+Geode_FRAMEWORKS = UIKit CoreGraphics Security IOSurface
 #Geode_CFLAGS = -fobjc-arc -IGCDWebServer/GCDWebServer/Core -IGCDWebServer/GCDWebServer/Requests -IGCDWebServer/GCDWebServer/Responses -Wno-deprecated-declarations
 Geode_CFLAGS = -fobjc-arc -Iinclude -IGCDWebServer/GCDWebServer/Core -IGCDWebServer/GCDWebServer/Requests -IGCDWebServer/GCDWebServer/Responses
 #Geode_CCFLAGS = -std=c++20 -I./include
