@@ -10,6 +10,8 @@
 #include <pthread.h>
 #import <IOSurface/IOSurfaceRef.h>
 #include <sys/uio.h>
+#include <os/log.h>
+
 void IOSurfacePrefetchPages(IOSurfaceRef surface);
 #define LOG(fmt, ...) os_log(OS_LOG_DEFAULT, "[ClearSword] " fmt, ##__VA_ARGS__)
 
