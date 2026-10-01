@@ -25,21 +25,24 @@ Geode_FILES = $(wildcard src/*.m) \
     fishhook/fishhook.c \
     $(wildcard MSColorPicker/MSColorPicker/*.m) \
     $(wildcard GCDWebServer/GCDWebServer/*/*.m)
+
 Geode_FRAMEWORKS = UIKit CoreGraphics Security IOSurface
-#Geode_CFLAGS = -fobjc-arc -IGCDWebServer/GCDWebServer/Core -IGCDWebServer/GCDWebServer/Requests -IGCDWebServer/GCDWebServer/Responses -Wno-deprecated-declarations
-Geode_CFLAGS = -fobjc-arc -Iinclude -IGCDWebServer/GCDWebServer/Core -IGCDWebServer/GCDWebServer/Requests -IGCDWebServer/GCDWebServer/Responses
-#Geode_CCFLAGS = -std=c++20 -I./include
-#Geode_CXXFLAGS = -std=c++20 -I./include 
-#Geode_CCFLAGS = -std=c++17 -I./include
-Geode_CXXFLAGS = -std=c++17 -I./include 
-Geode_LIBRARIES = archive # thats dumb
+
+Geode_CFLAGS = -fobjc-arc \
+    -Iinclude \
+    -IGCDWebServer/GCDWebServer/Core \
+    -IGCDWebServer/GCDWebServer/Requests \
+    -IGCDWebServer/GCDWebServer/Responses \
+    -Wno-error=deprecated-declarations
+
+Geode_CXXFLAGS = -std=c++17 -I./include
+Geode_LIBRARIES = archive
+
 $(APPLICATION_NAME)_LDFLAGS = -e _GeodeMain -rpath @loader_path/Frameworks
-#$(APPLICATION_NAME)_LDFLAGS = -e _GeodeMain -rpath @loader_path/Frameworks -L./libs -lLIEF -lstdc++
 
 include $(THEOS_MAKE_PATH)/application.mk
 SUBPROJECTS += ZSign TweakLoader WebServerLib PlatformConsole TestJITLess EnterpriseLoader CAHighFPS
 include $(THEOS_MAKE_PATH)/aggregate.mk
-
 
 after-package::
 ifeq ($(TROLLSTORE),1)
@@ -48,5 +51,3 @@ endif
 
 before-all::
 	@sh ./download_openssl.sh
-
-# make package FINALPACKAGE=1 STRIP=0 TROLLSTORE=1
