@@ -1,6 +1,6 @@
 #include "ClearSword.h"
 #include "../LCUtils/utils.h"
-#include "clearsword/darksword.h"
+#include "clearsword/kexploit_opa334.h"
 
 #include <unistd.h>
 #include <errno.h>
