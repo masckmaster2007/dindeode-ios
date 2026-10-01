@@ -1,6 +1,7 @@
 #include "ClearSword.h"
 #include "../LCUtils/utils.h"
 #include "clearsword/kexploit_opa334.h"
+#include "clearsword/kutils.h"
 
 #include <unistd.h>
 #include <errno.h>
@@ -19,7 +20,7 @@ int enable_self_jit(void) {
 
     LOG("calling go()");
 
-    int r = go();
+    int r = kexploit_opa334();
 
     LOG("go() returned %d", r);
 
@@ -53,7 +54,7 @@ int enable_self_jit(void) {
     LOG("calling find_self_proc()");
 
     uint64_t my_proc =
-        find_self_proc();
+        proc_self();
 
     LOG(
         "find_self_proc() returned 0x%llx",
