@@ -22,6 +22,7 @@ Geode_FILES = $(wildcard src/*.m) \
     $(wildcard src/LCUtils/*.m) \
     $(wildcard src/components/clearsword/*.c) \
     $(wildcard src/components/clearsword/*.m) \
+    $(wildcard src/components/clearsword/taskrop/*.m) \
     fishhook/fishhook.c \
     $(wildcard MSColorPicker/MSColorPicker/*.m) \
     $(wildcard GCDWebServer/GCDWebServer/*/*.m)
