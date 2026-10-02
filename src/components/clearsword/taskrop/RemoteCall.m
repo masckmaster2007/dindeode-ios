@@ -121,11 +121,6 @@ static uint64_t rc_task_get_ipc_port_kobject(uint64_t task, mach_port_t port) {
     return kobject;
 }
 
-@interface RemoteCall ()
-@property(nonatomic, readwrite) uint64_t callThreadAddr;
-@property(nonatomic, readwrite) uint64_t trojanThreadAddr;
-@end
-
 @implementation RemoteCall
 
 + (NSString *)lastInitError { return g_rc_last_init_error; }
