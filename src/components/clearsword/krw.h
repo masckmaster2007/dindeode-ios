@@ -25,6 +25,7 @@ void kwritebuf(uint64_t addr, const void *buf, uint64_t len);
 uint16_t kread16(uint64_t kaddr);
 uint32_t kread32(uint64_t kaddr);
 uint64_t kread64(uint64_t kaddr);
+uint8_t kread8(uint64_t addr);
 void kwrite8(uint64_t kaddr, uint8_t val);
 void kwrite16(uint64_t kaddr, uint16_t val);
 void kwrite32(uint64_t kaddr, uint32_t val);
