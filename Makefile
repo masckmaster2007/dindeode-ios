@@ -1,4 +1,4 @@
-export ARCHS := arm64
+export ARCHS := arm64 arm64e
 PACKAGE_FORMAT = ipa
 TARGET := iphone:clang:latest:14.0:13.5
 #TARGET := iphone:clang:16.5:14.0
