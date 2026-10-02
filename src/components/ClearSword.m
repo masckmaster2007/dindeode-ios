@@ -142,10 +142,6 @@ int enable_self_jit(void)
     }
     LOG("kernel R/W ready");
 
-    /* --- 2. PAC diagnostics (after R/W, before RemoteCall) --- */
-    diag_pac();
-    LOG("DIAG: gIsPACSupported after offsets_init = %d", gIsPACSupported);
-
     /* --- 3. fast path --- */
     int flags = 0;
     int csops_result = csops(getpid(), 0, &flags, sizeof(flags));
