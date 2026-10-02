@@ -36,7 +36,7 @@ Geode_CFLAGS = -fobjc-arc \
     -IGCDWebServer/GCDWebServer/Responses \
     -Wno-error=deprecated-declarations \
     -Wno-unused-variable \
-    -Wunused-function
+    -Wno-unused-function
 
 Geode_CXXFLAGS = -std=c++17 -I./include
 Geode_LIBRARIES = archive
