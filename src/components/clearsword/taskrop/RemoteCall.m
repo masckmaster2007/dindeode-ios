@@ -161,8 +161,8 @@ static uint64_t rc_task_get_ipc_port_kobject(uint64_t task, mach_port_t port) {
         return false;
     }
 
-    arm_thread_state64_set_pc_fptr(state, thread_set_exception_ports_addr);
-    arm_thread_state64_set_lr_fptr(state, pthread_exit_addr);
+    state.__pc = (uint64_t)thread_set_exception_ports_addr;
+    state.__lr = (uint64_t)pthread_exit_addr;
 
     uint64_t exceptionMask = EXC_MASK_GUARD |
                              EXC_MASK_BAD_ACCESS |
