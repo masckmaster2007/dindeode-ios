@@ -3,6 +3,8 @@
 
 #import <stdint.h>
 #import <stdbool.h>
+#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 // ---- pulls in all darksword primitives ----
 #import "../krw.h"
@@ -44,6 +46,13 @@ extern bool gIsPACSupported;
 // TaskRop's `utils.h` and lara's `pac.m` call this; keep the same name so the
 // ported sources compile unchanged.
 static inline bool is_pac_supported(void) { return gIsPACSupported; }
+// ---- iOS version comparison macros (from darksword's kexploit_opa334.h) ----
+
+#define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
+#define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
 
 // ---- convenience re-exports from darksword's kutils ----
 // (these already exist with the same names; listed for documentation)
