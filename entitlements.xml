@@ -2,13 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- NOTICE, when signing, replace the AAAAA11111 with your team id if this is causing you problems with keychain -->
 	<key>application-identifier</key>
 	<string>AAAAA11111.be.dimisaio.dindem</string>
+
 	<key>com.apple.developer.team-identifier</key>
 	<string>AAAAA11111</string>
+
+	<key>get-task-allow</key>
+	<true/>
+
+	<key>com.apple.private.MobileContainerManager.allowed</key>
+	<true/>
+
 	<key>com.apple.developer.kernel.extended-virtual-addressing</key>
 	<true/>
+
 	<key>com.apple.developer.kernel.increased-memory-limit</key>
 	<true/>
 	<key>com.apple.security.application-groups</key>
@@ -16,23 +24,22 @@
 		<string>group.com.SideStore.SideStore</string>
 		<string>group.com.rileytestut.AltStore</string>
 	</array>
-	<key>get-task-allow</key>
-	<true/>
-	<key>com.apple.private.MobileContainerManager.allowed</key>
-	<true/>
+
 	<key>keychain-access-groups</key>
 	<array>
 		<string>AAAAA11111.be.dimisaio.dindem.shared</string>
-    </array>
-    <!-- TODO: figure out another entitlement than this, because this just breaks JIT -->
-    <!--<key>com.apple.security.exception.files.absolute-path.read-write</key>
-    <array>
-        <string>/</string>
-        <string>/var/mobile/Containers/Data/Application</string>
-    </array>
+	</array>
 
-    <key>com.apple.private.security.no-container</key>
-    <true/>
-    -->
+	<key>platform-application</key>
+	<true/>
+
+	<key>com.apple.private.security.no-sandbox</key>
+	<true/>
+
+	<key>proc_info-allow</key>
+	<true/>
+
+	<key>com.apple.private.security.storage-exempt.heritable</key>
+	<true/>
 </dict>
 </plist>
