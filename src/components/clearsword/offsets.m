@@ -6,6 +6,7 @@
 //
 
 #import "offsets.h"
+#import "machine_info.h"
 #import "kexploit_opa334.h"
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
