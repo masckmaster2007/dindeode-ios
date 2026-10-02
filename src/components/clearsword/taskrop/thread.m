@@ -11,7 +11,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "taskrop_compat.h"
-#import "offsets.h"
 
 // xnu-10002.81.5/osfmk/kern/ast.h
 #define AST_GUARD               0x1000

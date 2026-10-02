@@ -8,7 +8,6 @@
 #import <Foundation/Foundation.h>
 #import "remotecall.h"
 #import "vm.h"
-#import "../offsets.h"
 #import "taskrop_compat.h"
 
 #define VM_PAGE_PACKED_PTR_BITS                         31
