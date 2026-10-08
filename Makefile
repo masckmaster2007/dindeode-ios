@@ -1,8 +1,14 @@
 export ARCHS := arm64 arm64e
 PACKAGE_FORMAT = ipa
 TARGET := iphone:clang:latest:14.0
-#TARGET := iphone:clang:16.5:14.0
 INSTALL_TARGET_PROCESSES = Geode
+
+# ---------------------------------------------------------
+# GLOBAL FLAGS (Inherited by all SUBPROJECTS + Main App)
+# ---------------------------------------------------------
+ADDITIONAL_CFLAGS += -mabi=ptrauth
+ADDITIONAL_CXXFLAGS += -mabi=ptrauth
+ADDITIONAL_LDFLAGS += -mabi=ptrauth
 
 include $(THEOS)/makefiles/common.mk
 
