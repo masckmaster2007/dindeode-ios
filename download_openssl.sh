@@ -7,18 +7,18 @@ THEOS_LIB="$THEOS/lib"
 
 echo "Downloading OpenSSL frameworks..."
 
-rm -rf OpenSSL.xcframework OpenSSL_with_arm64e.xcframework
+rm -rf OpenSSL.xcframework OpenSSL_arm64e
 rm -f OpenSSL.xcframework.zip OpenSSL_with_arm64e.xcframework.zip
 
-curl -L "$BASE_URL/OpenSSL.xcframework.zip" \
+curl -sL "$BASE_URL/OpenSSL.xcframework.zip" \
     -o OpenSSL.xcframework.zip
 
-mkdir -p OpenSSL_arm64e
-curl -L "$BASE_URL/OpenSSL_with_arm64e.xcframework.zip" \
+curl -sL "$BASE_URL/OpenSSL_with_arm64e.xcframework.zip" \
     -o OpenSSL_with_arm64e.xcframework.zip
 
 unzip -oq OpenSSL.xcframework.zip
 
+mkdir -p OpenSSL_arm64e
 unzip -oq OpenSSL_with_arm64e.xcframework.zip -d OpenSSL_arm64e
 
 mkdir -p "$THEOS_LIB"
@@ -42,21 +42,14 @@ mkdir -p "./Resources/Frameworks"
 rm -rf "./Resources/Frameworks/OpenSSL.framework"
 rm -rf "./Resources/Frameworks/OpenSSL_arm64e.framework"
 
-rsync -av --exclude 'Headers' \
-    "$THEOS_LIB/OpenSSL.framework" \
-    "./Resources/Frameworks/"
+rsync -a \
+    --exclude 'Headers' \
+    "$THEOS_LIB/OpenSSL.framework/" \
+    "./Resources/Frameworks/OpenSSL.framework/"
 
-rsync -av --exclude 'Headers' \
-    "$THEOS_LIB/OpenSSL_arm64e.framework" \
-    "./Resources/Frameworks/"
+rsync -a \
+    --exclude 'Headers' \
+    "$THEOS_LIB/OpenSSL_arm64e.framework/" \
+    "./Resources/Frameworks/OpenSSL_arm64e.framework/"
 
-echo
-echo "arm64:"
-lipo -info "$THEOS_LIB/OpenSSL.framework/OpenSSL"
-
-echo
-echo "arm64e:"
-lipo -info "$THEOS_LIB/OpenSSL_arm64e.framework/OpenSSL"
-
-echo
-echo "Done."
+echo "OpenSSL frameworks installed successfully."
