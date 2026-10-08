@@ -13,11 +13,13 @@ rm -f OpenSSL.xcframework.zip OpenSSL_with_arm64e.xcframework.zip
 curl -L "$BASE_URL/OpenSSL.xcframework.zip" \
     -o OpenSSL.xcframework.zip
 
+mkdir -p OpenSSL_arm64e
 curl -L "$BASE_URL/OpenSSL_with_arm64e.xcframework.zip" \
     -o OpenSSL_with_arm64e.xcframework.zip
 
 unzip -oq OpenSSL.xcframework.zip
-unzip -oq OpenSSL_with_arm64e.xcframework.zip
+
+unzip -oq OpenSSL_with_arm64e.xcframework.zip -d OpenSSL_arm64e
 
 mkdir -p "$THEOS_LIB"
 
@@ -29,24 +31,22 @@ cp -R \
     "$THEOS_LIB/OpenSSL.framework"
 
 cp -R \
-    "OpenSSL_with_arm64e.xcframework/ios-arm64_arm64e/OpenSSL.framework" \
+    "OpenSSL_arm64e/OpenSSL.xcframework/ios-arm64_arm64e/OpenSSL.framework" \
     "$THEOS_LIB/OpenSSL_arm64e.framework"
 
 rm -f OpenSSL.xcframework.zip OpenSSL_with_arm64e.xcframework.zip
-rm -rf OpenSSL.xcframework OpenSSL_with_arm64e.xcframework
+rm -rf OpenSSL.xcframework OpenSSL_arm64e
 
 mkdir -p "./Resources/Frameworks"
 
 rm -rf "./Resources/Frameworks/OpenSSL.framework"
 rm -rf "./Resources/Frameworks/OpenSSL_arm64e.framework"
 
-rsync -av \
-    --exclude 'Headers' \
+rsync -av --exclude 'Headers' \
     "$THEOS_LIB/OpenSSL.framework" \
     "./Resources/Frameworks/"
 
-rsync -av \
-    --exclude 'Headers' \
+rsync -av --exclude 'Headers' \
     "$THEOS_LIB/OpenSSL_arm64e.framework" \
     "./Resources/Frameworks/"
 
@@ -59,4 +59,4 @@ echo "arm64e:"
 lipo -info "$THEOS_LIB/OpenSSL_arm64e.framework/OpenSSL"
 
 echo
-echo "OpenSSL frameworks installed successfully."
+echo "Done."
