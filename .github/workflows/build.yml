@@ -17,84 +17,86 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Theos
+      - name: Install Dependencies
         run: |
-          # uncomment for swift
-          #sudo apt-get install -y libtinfo6
+          sudo apt-get update
+          sudo apt-get install -y zstd
 
+      - name: Install Theos & Procursus Toolchain
+        run: |
           echo "installing theos"
           export THEOS=$(mktemp -d theos.XXXXX)
           echo "THEOS=$THEOS" >> $GITHUB_ENV
 
-          # set architecture for the download urls below
-          export ARCH=$(uname -m)
-
-          # depth=1 for SPEED
           git clone --recursive https://github.com/theos/theos.git $THEOS --depth=1
 
-          # uncomment for swift
-          #curl -sL https://github.com/kabiroberai/swift-toolchain-linux/releases/download/v2.3.0/swift-5.8-ubuntu20.04.tar.xz | tar -xJvf - -C $THEOS/toolchain/
-
           echo "downloading llvm toolchain"
-          curl -sL https://github.com/theos/toolchain/releases/latest/download/linux-x86_64.tar.xz | tar -xJvf - -C $THEOS/toolchain/
+          mkdir -p $THEOS/toolchain/linux/iphone
+          curl -sSLf https://github.com/theos/toolchain/releases/latest/download/linux-x86_64.tar.zst | tar -I zstd -xvf - -C $THEOS/toolchain/linux/iphone --strip-components=1
 
-          # yoinked from theos install script
           if [[ -x $THEOS/toolchain/linux/iphone/bin/clang ]]; then
             echo "Successfully installed the toolchain!"
           else
-            echo "Something appears to have gone wrong -- the toolchain is not accessible. Please try again."
+            echo "Something appears to have gone wrong -- the toolchain is not accessible."
             exit 7
           fi
 
           echo "installing sdk !!"
           $THEOS/bin/install-sdk iPhoneOS16.5
-          
+
       - name: Build
         run: |
           git submodule update --init --recursive
+          
+          # Build 1: Standard IPA
+          rm -rf .theos
           make package FINALPACKAGE=1 STRIP=0
-          make clean
+
+          # Build 2: TrollStore TIPA (Clean object cache first)
+          rm -rf .theos
           make package FINALPACKAGE=1 STRIP=0 TROLLSTORE=1
 
       - name: Upload artifact
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v4
         with:
           name: GeodeLauncher
           path: packages/*.*
+
   publish:
     name: Publish
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main'
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Declare Version Variables
-      id: ref
-      run: |
-        echo "version=$(cat VERSION | xargs)" >> $GITHUB_OUTPUT
-        echo "hash=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
+      - name: Declare Version Variables
+        id: ref
+        run: |
+          echo "version=$(cat VERSION | xargs)" >> $GITHUB_OUTPUT
+          echo "hash=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
 
-    - name: Download Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: ${{ github.workspace }}/artifacts
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: GeodeLauncher
+          path: ${{ github.workspace }}/artifacts
 
-    - name: Rename files
-      run: |
-        mv artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.version }}.ipa artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.hash }}.ipa
-        mv artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.version }}.tipa artifacts/GeodeLauncher/be.dimisaio.dindem_${{ steps.ref.outputs.hash }}.tipa
+      - name: Rename files
+        run: |
+          cd artifacts
+          for f in *.ipa; do [ -f "$f" ] && mv "$f" "${f%.ipa}_${{ steps.ref.outputs.hash }}.ipa"; done
+          for f in *.tipa; do [ -f "$f" ] && mv "$f" "${f%.tipa}_${{ steps.ref.outputs.hash }}.tipa"; done
 
-    - name: Update Development Release
-      uses: andelf/nightly-release@main
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        #tag_name: v999999.9.9 # thanks cvolton
-        tag_name: nightly
-        name: 'Development Release'
-        body: Geode iOS development release for commit ${{ github.sha }}. This is meant for developers. Please look below this release for the latest stable release.
-        files: |
-          ./artifacts/GeodeLauncher/*.ipa
-          ./artifacts/GeodeLauncher/*.tipa
+      - name: Update Development Release
+        uses: andelf/nightly-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: nightly
+          name: 'Development Release'
+          body: Geode iOS development release for commit ${{ github.sha }}.
+          files: |
+            ./artifacts/*.ipa
+            ./artifacts/*.tipa
