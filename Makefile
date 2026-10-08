@@ -3,12 +3,9 @@ PACKAGE_FORMAT = ipa
 TARGET := iphone:clang:latest:14.0
 INSTALL_TARGET_PROCESSES = Geode
 
-# ---------------------------------------------------------
-# GLOBAL FLAGS (Inherited by all SUBPROJECTS + Main App)
-# ---------------------------------------------------------
-ADDITIONAL_CFLAGS += -mabi=ptrauth
-ADDITIONAL_CXXFLAGS += -mabi=ptrauth
-ADDITIONAL_LDFLAGS += -mabi=ptrauth
+ADDITIONAL_CFLAGS += -fptrauth-calls -fptrauth-intrinsics
+ADDITIONAL_CXXFLAGS += -fptrauth-calls -fptrauth-intrinsics
+ADDITIONAL_LDFLAGS += -fptrauth-calls -fptrauth-intrinsics
 
 include $(THEOS)/makefiles/common.mk
 
