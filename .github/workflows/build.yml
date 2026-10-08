@@ -37,7 +37,7 @@ jobs:
 
           echo "downloading llvm toolchain"
           # curl -sL https://github.com/L1ghtmann/llvm-project/releases/latest/download/iOSToolchain-$ARCH.tar.xz | tar -xJvf - -C $THEOS/toolchain/
-          curl -sL https://github.com/L1ghtmann/llvm-project/releases/download/main-update_3-eabca92/iOSToolchain-$ARCH.tar.xz | tar -xJvf - -C $THEOS/toolchain/
+          curl -sL https://github.com/L1ghtmann/llvm-project/releases/download/main-ca1f250/iOSToolchain-$ARCH.tar.xz | tar -xJvf - -C $THEOS/toolchain/
 
           # yoinked from theos install script
           if [[ -x $THEOS/toolchain/linux/iphone/bin/clang ]]; then
