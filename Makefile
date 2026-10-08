@@ -3,11 +3,6 @@ PACKAGE_FORMAT = ipa
 TARGET := iphone:clang:latest:14.0
 INSTALL_TARGET_PROCESSES = Geode
 
-# Force modern arm64e ABI (0x80) across main app AND subprojects
-ADDITIONAL_CFLAGS += -target arm64e-apple-ios14.0 -fptrauth-calls -fptrauth-intrinsics
-ADDITIONAL_CXXFLAGS += -target arm64e-apple-ios14.0 -fptrauth-calls -fptrauth-intrinsics
-ADDITIONAL_LDFLAGS += -target arm64e-apple-ios14.0 -Wl,-w
-
 include $(THEOS)/makefiles/common.mk
 
 APPLICATION_NAME = Geode
