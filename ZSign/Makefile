@@ -1,5 +1,5 @@
 TARGET := iphone:clang:latest:14.0:13.5
-ARCHS := arm64
+ARCHS := arm64 arm64e
 include $(THEOS)/makefiles/common.mk
 
 LIBRARY_NAME = ZSign
